@@ -1,0 +1,177 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum EStatusPengajuan {
+  DRAFT
+  PENDING
+  APPROVE
+  REJECT
+}
+
+enum EGender {
+  L
+  P
+}
+
+enum EStatusKawin {
+  K
+  BK
+  J
+  D
+  CM
+}
+
+model MenuList {
+  id   String @id @default(uuid())
+  name String
+  path String
+
+  status    Boolean    @default(true)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @default(now())
+  UserMenu  UserMenu[]
+}
+
+model Role {
+  id   String @id @default(uuid())
+  name String
+
+  status    Boolean    @default(true)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @default(now())
+  UserMenu  UserMenu[]
+  User      User[]
+}
+
+model UserMenu {
+  id     String @id @default(uuid())
+  access String
+
+  MenuList   MenuList @relation(fields: [menuListId], references: [id])
+  Role       Role     @relation(fields: [roleId], references: [id])
+  menuListId String
+  roleId     String
+}
+
+model User {
+  id       String  @id @default(uuid())
+  name     String
+  username String  @unique
+  password String
+  phone    String?
+  email    String?
+
+  status    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
+  Role      Role     @relation(fields: [roleId], references: [id])
+  roleId    String
+}
+
+model Produk {
+  id            String @id @default(uuid())
+  name          String
+  maxTenor      Int
+  maxPlafon     Int
+  byAdmin       Float
+  byMaterai     Int
+  byTatalaksana Float
+  margin        Float
+
+  status    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
+}
+
+model Jenis {
+  id      String @id @default(uuid())
+  name    String
+  penalty Float
+
+  status    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
+}
+
+model Dapem {
+  id            String @id @default(uuid())
+  gajiBersih    Int
+  tenor         Int
+  plafon        Int
+  byAdmin       Float
+  byMaterai     Int
+  byTatalaksana Int
+  blokir        Int
+  penalty       Float
+  pelunasan     Int
+  margin        Float
+
+  statusPengajuan EStatusPengajuan @default(DRAFT)
+  statusDeviasi   Boolean          @default(false)
+  status          Boolean          @default(true)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @default(now())
+  JadwalAngsuran  JadwalAngsuran[]
+}
+
+model DataDebitur {
+  id                   String         @id @default(uuid())
+  nama                 String
+  nik                  String
+  noKK                 String
+  tanggalLahir         DateTime
+  alamat               String
+  kelurahan            String
+  kecamatan            String
+  kota                 String
+  provinsi             String
+  kodePos              String
+  geoLokasi            String
+  noTelepon            String
+  gender               EGender
+  pekerjaan            String
+  alamatPekerjaan      String         @db.Text
+  statusKawin          EStatusKawin
+  namaPasangan         String?
+  nikPasangan          String?
+  tanggalLahirPasangan DateTime?
+  alamatPasangan       String?
+  noTeleponPasangan    String?
+  pekerjaanPasangan    String?
+  DataKeluarga         DataKeluarga[]
+}
+
+model DataKeluarga {
+  id            String      @id @default(uuid())
+  nama          String
+  noTelepon     String
+  hubungan      String
+  alamat        String
+  gender        EGender
+  DataDebitur   DataDebitur @relation(fields: [dataDebiturId], references: [id])
+  dataDebiturId String
+}
+
+model JadwalAngsuran {
+  id           String   @id @default(uuid())
+  jadwalBayar  DateTime
+  pokok        Int
+  margin       Int
+  tanggalBayar DateTime
+  angsuranKe   Int
+
+  Dapem   Dapem  @relation(fields: [dapemId], references: [id])
+  dapemId String
+}
