@@ -16,8 +16,10 @@ datasource db {
 enum EStatusPengajuan {
   DRAFT
   PENDING
-  APPROVE
-  REJECT
+  SETUJU
+  TOLAK
+  BATAL
+  LUNAS
 }
 
 enum EGender {
@@ -30,39 +32,18 @@ enum EStatusKawin {
   BK
   J
   D
-  CM
-}
-
-model MenuList {
-  id   String @id @default(uuid())
-  name String
-  path String
-
-  status    Boolean    @default(true)
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @default(now())
-  UserMenu  UserMenu[]
 }
 
 model Role {
-  id   String @id @default(uuid())
-  name String
+  id          String  @id @default(uuid())
+  name        String
+  description String?
+  permissions String  @default("[]") @db.Text
 
-  status    Boolean    @default(true)
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @default(now())
-  UserMenu  UserMenu[]
-  User      User[]
-}
-
-model UserMenu {
-  id     String @id @default(uuid())
-  access String
-
-  MenuList   MenuList @relation(fields: [menuListId], references: [id])
-  Role       Role     @relation(fields: [roleId], references: [id])
-  menuListId String
-  roleId     String
+  status     Boolean  @default(true)
+  created_at DateTime @default(now())
+  updated_at DateTime @default(now())
+  User       User[]
 }
 
 model User {
@@ -72,106 +53,137 @@ model User {
   password String
   phone    String?
   email    String?
+  position String
 
-  status    Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @default(now())
-  Role      Role     @relation(fields: [roleId], references: [id])
-  roleId    String
+  status        Boolean  @default(true)
+  created_at    DateTime @default(now())
+  updated_at    DateTime @default(now())
+  Role          Role     @relation(fields: [roleId], references: [id])
+  roleId        String
+  DapemCreated  Dapem[]  @relation("CreatedBy")
+  DapemApproved Dapem[]  @relation("ApprovedBy")
 }
 
 model Produk {
-  id            String @id @default(uuid())
-  name          String
-  maxTenor      Int
-  maxPlafon     Int
-  byAdmin       Float
-  byMaterai     Int
-  byTatalaksana Float
-  margin        Float
+  id             String  @id @default(uuid())
+  name           String
+  description    String?
+  max_tenor      Int
+  max_plafon     Int
+  by_admin       Float
+  by_materai     Int
+  by_tatalaksana Float
+  margin         Float
 
-  status    Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @default(now())
+  status     Boolean  @default(true)
+  created_at DateTime @default(now())
+  updated_at DateTime @default(now())
 }
 
 model Jenis {
-  id      String @id @default(uuid())
-  name    String
-  penalty Float
+  id          String  @id @default(uuid())
+  name        String
+  blokir      Int
+  description String?
 
-  status    Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @default(now())
+  status     Boolean  @default(true)
+  created_at DateTime @default(now())
+  updated_at DateTime @default(now())
 }
 
 model Dapem {
-  id            String @id @default(uuid())
-  gajiBersih    Int
-  tenor         Int
-  plafon        Int
-  byAdmin       Float
-  byMaterai     Int
-  byTatalaksana Int
-  blokir        Int
-  penalty       Float
-  pelunasan     Int
-  margin        Float
+  id             String           @id @default(uuid())
+  salary         Int
+  tenor          Int
+  plafon         Int
+  by_admin       Float
+  by_materai     Int
+  by_tatalaksana Int
+  blokir         Int
+  pelunasan      Int
+  margin         Float
+  description    String?          @db.Text
+  status_sub     EStatusPengajuan @default(DRAFT)
+  status_dev     Boolean          @default(false)
+  status         Boolean          @default(true)
+  created_at     DateTime         @default(now())
+  updated_at     DateTime         @default(now())
+  DataDebitur    DataDebitur      @relation(fields: [dataDebiturId], references: [id])
+  dataDebiturId  String
+  CreatedBy      User?            @relation("CreatedBy", fields: [createdById], references: [id])
+  createdById    String?
 
-  statusPengajuan EStatusPengajuan @default(DRAFT)
-  statusDeviasi   Boolean          @default(false)
-  status          Boolean          @default(true)
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @default(now())
-  JadwalAngsuran  JadwalAngsuran[]
+  ApprovedBy     User?            @relation("ApprovedBy", fields: [approvedById], references: [id])
+  approvedById   String?
+  JadwalAngsuran JadwalAngsuran[]
+  LogAktivitas   LogAktivitas[]
 }
 
 model DataDebitur {
-  id                   String         @id @default(uuid())
-  nama                 String
-  nik                  String
-  noKK                 String
-  tanggalLahir         DateTime
-  alamat               String
-  kelurahan            String
-  kecamatan            String
-  kota                 String
-  provinsi             String
-  kodePos              String
-  geoLokasi            String
-  noTelepon            String
-  gender               EGender
-  pekerjaan            String
-  alamatPekerjaan      String         @db.Text
-  statusKawin          EStatusKawin
-  namaPasangan         String?
-  nikPasangan          String?
-  tanggalLahirPasangan DateTime?
-  alamatPasangan       String?
-  noTeleponPasangan    String?
-  pekerjaanPasangan    String?
-  DataKeluarga         DataKeluarga[]
+  id               String         @id @default(uuid())
+  nama             String
+  nik              String
+  no_kk            String?
+  gaji             Int
+  tanggal_lahir    DateTime
+  alamat           String
+  kelurahan        String
+  kecamatan        String
+  kota             String
+  provinsi         String
+  kode_pos         String
+  geo_lokasi       String?
+  no_telepon       String
+  email            String?
+  jenis_kelamin    EGender
+  pekerjaan        String
+  alamat_pekerjaan String         @db.Text
+  description      String?        @db.Text
+  files            String?        @db.Text
+  status_kawin     EStatusKawin
+  DataKeluarga     DataKeluarga[]
+  Dapem            Dapem[]
 }
 
 model DataKeluarga {
   id            String      @id @default(uuid())
   nama          String
-  noTelepon     String
-  hubungan      String
+  nik           String?
+  tanggal_lahir String?
   alamat        String
+  no_telepon    String
+  email         String?
+  hubungan      String
   gender        EGender
   DataDebitur   DataDebitur @relation(fields: [dataDebiturId], references: [id])
   dataDebiturId String
 }
 
 model JadwalAngsuran {
-  id           String   @id @default(uuid())
-  jadwalBayar  DateTime
-  pokok        Int
-  margin       Int
-  tanggalBayar DateTime
-  angsuranKe   Int
+  id            String   @id @default(uuid())
+  no_trx        String
+  jadwal_bayar  DateTime
+  pokok         Int
+  margin        Int
+  tanggal_bayar DateTime
+  angsuran_ke   Int
+  keterangan    String?
+  file          String?
 
   Dapem   Dapem  @relation(fields: [dapemId], references: [id])
   dapemId String
+}
+
+// ============ LOG AKTIVITAS ============
+model LogAktivitas {
+  id        String  @id @default(uuid())
+  aktivitas String // PENGAJUAN_BARU, PERSETUJUAN, PENCAIRAN, dll
+  deskripsi String? @db.Text
+  data_lama String? @db.Text // JSON
+  data_baru String? @db.Text // JSON
+
+  created_at DateTime @default(now())
+
+  Dapem   Dapem?  @relation(fields: [dapemId], references: [id], onDelete: Cascade)
+  dapemId String?
 }
