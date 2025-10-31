@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -20,6 +14,11 @@ enum EStatusPengajuan {
   TOLAK
   BATAL
   LUNAS
+}
+
+enum EKunjungan {
+  BELUM
+  SUDAH
 }
 
 enum EGender {
@@ -71,6 +70,7 @@ model Produk {
   max_tenor      Int
   max_plafon     Int
   by_admin       Float
+  by_tabungan    Float
   by_materai     Int
   by_tatalaksana Float
   margin         Float
@@ -83,7 +83,6 @@ model Produk {
 model Jenis {
   id          String  @id @default(uuid())
   name        String
-  blokir      Int
   description String?
 
   status     Boolean  @default(true)
@@ -97,32 +96,32 @@ model Dapem {
   tenor          Int
   plafon         Int
   by_admin       Float
+  by_tabungan    Float
   by_materai     Int
   by_tatalaksana Int
-  blokir         Int
   pelunasan      Int
   margin         Float
   description    String?          @db.Text
   status_sub     EStatusPengajuan @default(DRAFT)
   status_dev     Boolean          @default(false)
-  status         Boolean          @default(true)
-  created_at     DateTime         @default(now())
-  updated_at     DateTime         @default(now())
-  DataDebitur    DataDebitur      @relation(fields: [dataDebiturId], references: [id])
-  dataDebiturId  String
-  CreatedBy      User?            @relation("CreatedBy", fields: [createdById], references: [id])
-  createdById    String?
+
+  status        Boolean     @default(true)
+  created_at    DateTime    @default(now())
+  updated_at    DateTime    @default(now())
+  DataDebitur   DataDebitur @relation(fields: [dataDebiturId], references: [id])
+  dataDebiturId String
+  CreatedBy     User?       @relation("CreatedBy", fields: [createdById], references: [id])
+  createdById   String?
 
   ApprovedBy     User?            @relation("ApprovedBy", fields: [approvedById], references: [id])
   approvedById   String?
   JadwalAngsuran JadwalAngsuran[]
-  LogAktivitas   LogAktivitas[]
 }
 
 model DataDebitur {
   id               String         @id @default(uuid())
   nama             String
-  nik              String
+  nik              String         @unique
   no_kk            String?
   gaji             Int
   tanggal_lahir    DateTime
@@ -160,30 +159,17 @@ model DataKeluarga {
 }
 
 model JadwalAngsuran {
-  id            String   @id @default(uuid())
-  no_trx        String
-  jadwal_bayar  DateTime
-  pokok         Int
-  margin        Int
-  tanggal_bayar DateTime
-  angsuran_ke   Int
-  keterangan    String?
-  file          String?
+  id               String     @id @default(uuid())
+  no_trx           String
+  jadwal_bayar     DateTime
+  pokok            Int
+  margin           Int
+  tanggal_bayar    DateTime
+  angsuran_ke      Int
+  keterangan       String?
+  file             String?
+  status_kunjungan EKunjungan @default(BELUM)
 
   Dapem   Dapem  @relation(fields: [dapemId], references: [id])
   dapemId String
-}
-
-// ============ LOG AKTIVITAS ============
-model LogAktivitas {
-  id        String  @id @default(uuid())
-  aktivitas String // PENGAJUAN_BARU, PERSETUJUAN, PENCAIRAN, dll
-  deskripsi String? @db.Text
-  data_lama String? @db.Text // JSON
-  data_baru String? @db.Text // JSON
-
-  created_at DateTime @default(now())
-
-  Dapem   Dapem?  @relation(fields: [dapemId], references: [id], onDelete: Cascade)
-  dapemId String?
 }
