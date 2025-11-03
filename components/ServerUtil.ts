@@ -17,12 +17,18 @@ export const GetDefaultPageprop = (req: NextRequest) => {
   };
 };
 
-export function ResponseServer(status: number, msg: string, data?: any) {
+export function ResponseServer<T>(
+  status: number,
+  msg: string,
+  data?: T[],
+  total?: number
+) {
   return NextResponse.json(
     {
       status,
       msg,
       data,
+      total,
     },
     { status }
   );

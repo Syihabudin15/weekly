@@ -7,7 +7,7 @@ export const GET = async (req: NextRequest) => {
   const { pageSize, search, skip } = GetDefaultPageprop(req);
   const data = await prisma.role.findMany({
     where: {
-      ...(search && { name: search }),
+      ...(search && { name: { contains: search } }),
       status: true,
     },
     skip: skip,
@@ -15,12 +15,12 @@ export const GET = async (req: NextRequest) => {
   });
   const total = await prisma.role.count({
     where: {
-      ...(search && { name: search }),
+      ...(search && { name: { contains: search } }),
       status: true,
     },
   });
 
-  return ResponseServer(200, "OK", { data, total });
+  return ResponseServer<Role>(200, "OK", data, total);
 };
 export const POST = async (req: NextRequest) => {
   const data: Role = await req.json();
@@ -33,8 +33,8 @@ export const PUT = async (req: NextRequest) => {
   const data: Role = await req.json();
   const { id, ...saved } = data;
   await prisma.role.update({
-    where: { id },
-    data: saved,
+    where: { id: req.nextUrl.searchParams.get("id") || "123" },
+    data: { ...saved, updated_at: new Date() },
   });
 
   return ResponseServer(200, `Edit data role ${data.name} berhasil`);

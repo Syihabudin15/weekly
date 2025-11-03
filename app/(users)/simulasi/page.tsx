@@ -1,5 +1,5 @@
-import Simulasi from "@/components/Pages/Simulasi";
+import { SimulasiPage } from "@/components/Pages";
 
 export default function Page() {
-  return <Simulasi />;
+  return <SimulasiPage />;
 }

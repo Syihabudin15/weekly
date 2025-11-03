@@ -70,35 +70,40 @@ model Produk {
   max_tenor      Int
   max_plafon     Int
   by_admin       Float
-  by_tabungan    Float
+  by_tabungan    Int
   by_materai     Int
   by_tatalaksana Float
   margin         Float
+  dsr            Float   @default(70)
 
   status     Boolean  @default(true)
   created_at DateTime @default(now())
   updated_at DateTime @default(now())
+  Dapem      Dapem[]
 }
 
 model Jenis {
   id          String  @id @default(uuid())
   name        String
   description String?
+  pelunasan   Boolean @default(false)
 
   status     Boolean  @default(true)
   created_at DateTime @default(now())
   updated_at DateTime @default(now())
+  Dapem      Dapem[]
 }
 
 model Dapem {
   id             String           @id @default(uuid())
   salary         Int
+  dsr            Float
   tenor          Int
   plafon         Int
   by_admin       Float
-  by_tabungan    Float
+  by_tabungan    Int
   by_materai     Int
-  by_tatalaksana Int
+  by_tatalaksana Float
   pelunasan      Int
   margin         Float
   description    String?          @db.Text
@@ -108,6 +113,10 @@ model Dapem {
   status        Boolean     @default(true)
   created_at    DateTime    @default(now())
   updated_at    DateTime    @default(now())
+  process_desc  String?     @db.Text
+  process_date  DateTime?
+  Produk        Produk      @relation(fields: [produkId], references: [id])
+  Jenis         Jenis       @relation(fields: [jenisId], references: [id])
   DataDebitur   DataDebitur @relation(fields: [dataDebiturId], references: [id])
   dataDebiturId String
   CreatedBy     User?       @relation("CreatedBy", fields: [createdById], references: [id])
@@ -116,6 +125,8 @@ model Dapem {
   ApprovedBy     User?            @relation("ApprovedBy", fields: [approvedById], references: [id])
   approvedById   String?
   JadwalAngsuran JadwalAngsuran[]
+  produkId       String
+  jenisId        String
 }
 
 model DataDebitur {

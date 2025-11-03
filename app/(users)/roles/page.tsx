@@ -1,5 +1,5 @@
-import RoleUI from "@/components/Pages/Role";
+import { RolePage } from "@/components/Pages";
 
 export default function Page() {
-  return <RoleUI />;
+  return <RolePage />;
 }

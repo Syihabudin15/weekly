@@ -6,6 +6,11 @@ const prisma = new PrismaClient();
 async function main() {
   const perms = [
     {
+      path: "/dashboard",
+      nama: "Dashboard",
+      access: ["read"],
+    },
+    {
       path: "/simulasi",
       nama: "Simulasi",
       access: ["read", "write", "update", "delete"],

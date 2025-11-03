@@ -1,7 +1,5 @@
+import { UserPage } from "@/components/Pages";
+
 export default function Page() {
-  return (
-    <div>
-      <h1>User</h1>
-    </div>
-  );
+  return <UserPage />;
 }

@@ -1,17 +1,23 @@
+// app/layout.tsx atau app/RootLayout.tsx
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+// Ganti import Roboto dan Roboto_Mono
+// Kita akan mengimpor Fira_Code dari next/font/google
+import { Fira_Code } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/Provider";
+import { App, ConfigProvider } from "antd";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+// 1. Definisikan font Fira Code
+const firaCode = Fira_Code({
+  // Pilih bobot (weights) yang Anda butuhkan
+  // '400' (Regular) dan '700' (Bold) adalah umum
+  weight: ["400", "500", "600", "700"],
   subsets: ["latin"],
+  variable: "--font-fira-code", // Variabel CSS baru
+  display: "swap",
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+// Anda bisa menghapus deklarasi font kedua jika hanya menggunakan Fira Code
 
 export const metadata: Metadata = {
   title: "Create Next App",
@@ -25,10 +31,26 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      {/* 2. Terapkan variabel CSS font Fira Code dan set default font-mono */}
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased font-mono`}
+        // Hanya perlu variabel Fira Code
+        // Gunakan font-mono di body untuk memastikan Fira Code digunakan (karena Monospace)
+        className={`${firaCode.variable} antialiased font-mono`}
       >
-        <Providers>{children}</Providers>
+        <ConfigProvider
+          theme={{
+            token: {
+              // 3. Set font-family utama Ant Design ke Fira Code
+              fontFamily: "var(--font-fira-code)",
+              // Fira Code juga digunakan sebagai font Monospace (code)
+              fontFamilyCode: "var(--font-fira-code)",
+            },
+          }}
+        >
+          {/* <App> */}
+          <Providers>{children}</Providers>
+          {/* </App> */}
+        </ConfigProvider>
       </body>
     </html>
   );
