@@ -109,3 +109,20 @@ export const formatterRupiah = (value: number | string | undefined) =>
 
 export const formatterPercent = (value: number | string | undefined) =>
   value ? `${value} %` : "";
+
+export const calculateWeeklyPayment = (
+  principal: number,
+  annualRate: number,
+  tenorWeeks: number
+): number => {
+  const totalMargin = principal * (annualRate / 100) * (tenorWeeks / 52);
+  const totalRepayment = principal + totalMargin;
+  const weeklyPayment = totalRepayment / tenorWeeks; // Total Pengembalian dibagi Tenor (Minggu)
+  return weeklyPayment;
+};
+export const convertWeeklyToMonthlyPayment = (
+  weeklyPayment: number
+): number => {
+  // return weeklyPayment * (52 / 12);
+  return weeklyPayment * 4;
+};

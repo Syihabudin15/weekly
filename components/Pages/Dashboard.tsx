@@ -11,6 +11,7 @@ import {
   Space,
   Tag,
   Spin,
+  TableProps,
 } from "antd";
 import {
   PieChart,
@@ -24,6 +25,8 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
+  PieLabel,
+  Text as TextRecarht,
 } from "recharts";
 import {
   TrendingUp,
@@ -36,23 +39,12 @@ import {
   CreditCard,
 } from "lucide-react";
 import dayjs from "dayjs";
+import { formatterRupiah } from "../Util";
 
 const { Title, Text } = Typography;
 
-// =========================================================================
-// UTILITY FUNCTIONS & FORMATTERS
-// =========================================================================
-
-// Helper function untuk format Rupiah
-const formatterRupiah = (value) => {
-  if (value === null || value === undefined) return "Rp 0";
-  return `Rp ${Math.round(value)
-    .toString()
-    .replace(/\B(?=(\d{3})+(?!\d))/g, ".")}`;
-};
-
 // Helper function untuk format angka besar (Jutaan/Milyaran)
-const formatLargeNumber = (num) => {
+const formatLargeNumber = (num: number) => {
   if (num >= 1000000000) {
     return `${(num / 1000000000).toFixed(1)} M`;
   }
@@ -181,7 +173,19 @@ const fetchMonitoringData = async () => {
 // =========================================================================
 
 // 1. Komponen Kartu KPI
-const KpiCard = ({ title, value, icon, unit, color }) => (
+const KpiCard = ({
+  title,
+  value,
+  icon,
+  unit,
+  color,
+}: {
+  title: string;
+  value: string | number;
+  icon: string | React.ReactNode;
+  unit?: string | number;
+  color: string;
+}) => (
   <Card
     // variant={"outlined"}
     className="shadow-md h-full transition duration-300 hover:shadow-lg hover:border-r-4"
@@ -263,7 +267,7 @@ const problemAccountColumns = [
 
 // 3. Main Dashboard Component
 export default function FinancingMonitoringDashboard() {
-  const [data, setData] = useState(null);
+  const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   // Efek untuk memuat data dari API Mock saat komponen dimuat
@@ -315,14 +319,13 @@ export default function FinancingMonitoringDashboard() {
     innerRadius,
     outerRadius,
     percent,
-    index,
   }) => {
     const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
     const x = cx + radius * Math.cos((-midAngle * Math.PI) / 180);
     const y = cy + radius * Math.sin((-midAngle * Math.PI) / 180);
 
     return (
-      <Text
+      <TextRecarht
         x={x}
         y={y}
         fill="white"
@@ -331,7 +334,7 @@ export default function FinancingMonitoringDashboard() {
         style={{ fontSize: 12, fontWeight: "bold" }}
       >
         {`${(percent * 100).toFixed(0)}%`}
-      </Text>
+      </TextRecarht>
     );
   };
 
@@ -427,13 +430,15 @@ export default function FinancingMonitoringDashboard() {
                   outerRadius={100}
                   fill="#8884d8"
                   labelLine={false}
-                  label={renderCustomizedLabel}
+                  label={renderCustomizedLabel as any as PieLabel}
                 >
                   {productDistribution.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Pie>
-                <Tooltip formatter={(value) => formatterRupiah(value)} />
+                <Tooltip
+                  formatter={(value) => formatterRupiah(value as string)}
+                />
                 <Legend
                   layout="vertical"
                   verticalAlign="middle"
@@ -470,9 +475,9 @@ export default function FinancingMonitoringDashboard() {
                 />
                 <YAxis yAxisId="right" orientation="right" stroke="#82ca9d" />
                 <Tooltip
-                  formatter={(value, name, props) => {
+                  formatter={(value, name) => {
                     if (name === "outstanding")
-                      return [formatterRupiah(value), "Outstanding"];
+                      return [formatterRupiah(value as string), "Outstanding"];
                     return [value, "Jumlah Debitur"];
                   }}
                 />
@@ -508,7 +513,7 @@ export default function FinancingMonitoringDashboard() {
             className="shadow-md"
           >
             <Table
-              columns={problemAccountColumns}
+              columns={problemAccountColumns as TableProps["columns"]}
               dataSource={problemAccounts}
               pagination={false}
               size="middle"

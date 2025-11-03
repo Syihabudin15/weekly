@@ -156,40 +156,40 @@ const BerkasPendukungTab = ({ files }) => {
     });
   };
 
-  const fileColumns = [
-    { title: "Nama Berkas", dataIndex: "name", key: "name" },
-    {
-      title: "Jenis",
-      dataIndex: "type",
-      key: "type",
-      render: (type) => (
-        <Text>
-          {getFileIcon(type)}
-          <span className="ml-2">{type.split("/").pop().toUpperCase()}</span>
-        </Text>
-      ),
-    },
-    {
-      title: "Tgl. Unggah",
-      dataIndex: "date",
-      key: "date",
-      render: (date) => dayjs(date).format("DD/MM/YYYY HH:mm"),
-    },
-    {
-      title: "Aksi",
-      key: "action",
-      render: (text, record) => (
-        <Button
-          type="primary"
-          icon={<DownloadOutlined />}
-          size="small"
-          onClick={() => handleDownload(record.name)}
-        >
-          Unduh
-        </Button>
-      ),
-    },
-  ];
+  // const fileColumns = [
+  //   { title: "Nama Berkas", dataIndex: "name", key: "name" },
+  //   {
+  //     title: "Jenis",
+  //     dataIndex: "type",
+  //     key: "type",
+  //     render: (type) => (
+  //       <Text>
+  //         {getFileIcon(type)}
+  //         <span className="ml-2">{type.split("/").pop().toUpperCase()}</span>
+  //       </Text>
+  //     ),
+  //   },
+  //   {
+  //     title: "Tgl. Unggah",
+  //     dataIndex: "date",
+  //     key: "date",
+  //     render: (date) => dayjs(date).format("DD/MM/YYYY HH:mm"),
+  //   },
+  //   {
+  //     title: "Aksi",
+  //     key: "action",
+  //     render: (text, record) => (
+  //       <Button
+  //         type="primary"
+  //         icon={<DownloadOutlined />}
+  //         size="small"
+  //         onClick={() => handleDownload(record.name)}
+  //       >
+  //         Unduh
+  //       </Button>
+  //     ),
+  //   },
+  // ];
 
   return (
     <List
@@ -200,7 +200,7 @@ const BerkasPendukungTab = ({ files }) => {
       }
       bordered
       dataSource={files}
-      renderItem={(item) => (
+      renderItem={(item: any) => (
         <List.Item
           actions={[
             <Text className="text-gray-500 text-sm" key="date">
@@ -234,7 +234,7 @@ const BerkasPendukungTab = ({ files }) => {
 // --- KOMPONEN UTAMA DETAIL VIEW ---
 
 const ApplicationDetailView = ({ applicationId = "A001" }) => {
-  const [detailData, setDetailData] = useState(null);
+  const [detailData, setDetailData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false); // Status loading untuk aksi approval
 
@@ -293,7 +293,7 @@ const ApplicationDetailView = ({ applicationId = "A001" }) => {
       okText: "Setuju",
       cancelText: "Batal",
       onOk() {
-        const reasonElement = document.getElementById("approvalReason");
+        const reasonElement: any = document.getElementById("approvalReason");
         const reason = reasonElement ? reasonElement.value.trim() : "";
         updateApplicationStatus(
           "SETUJU",
@@ -627,7 +627,8 @@ const ApplicationDetailView = ({ applicationId = "A001" }) => {
         {isPending && (
           <Col>
             <Button
-              type="danger"
+              type="primary"
+              danger
               icon={<CloseCircleOutlined />}
               onClick={handleRejectClick}
               loading={isSubmitting}

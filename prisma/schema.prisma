@@ -158,13 +158,8 @@ model DataDebitur {
 model DataKeluarga {
   id            String      @id @default(uuid())
   nama          String
-  nik           String?
-  tanggal_lahir String?
-  alamat        String
-  no_telepon    String
-  email         String?
   hubungan      String
-  gender        EGender
+  no_telepon    String
   DataDebitur   DataDebitur @relation(fields: [dataDebiturId], references: [id])
   dataDebiturId String
 }

@@ -10,7 +10,6 @@ import {
   Modal,
   Form,
   Input,
-  InputNumber,
   message,
   Row,
   Col,
@@ -25,7 +24,6 @@ import {
   Edit,
   Search,
   Trash2,
-  DollarSign,
   Calendar,
   Info,
   User,
@@ -34,6 +32,7 @@ import {
 } from "lucide-react";
 import type { TableProps } from "antd";
 import dayjs from "dayjs";
+import { formatterRupiah, usePermission } from "../Util";
 
 // =========================================================================
 // INTERFACE & UTILITY (Disesuaikan dengan EKunjungan baru)
@@ -68,22 +67,9 @@ interface IPageProps<T> {
   total: number;
 }
 // Placeholder for usePermission, adjust import path as needed
-const usePermission = () => ({
-  canWrite: (path: string) => true,
-  canUpdate: (path: string) => true,
-  canDelete: (path: string) => true,
-});
 
-const { Text, Title } = Typography;
+const { Text } = Typography;
 const { Option } = Select;
-
-// Helper Formatter
-const formatterRupiah = (value: number | string | undefined) =>
-  value ? `Rp ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ".") : "";
-const parserRupiah = (displayValue: string | undefined): number | undefined => {
-  const cleaned = displayValue ? displayValue.replace(/Rp\s?|(\.)/g, "") : "";
-  return cleaned ? Number(cleaned) : undefined;
-};
 
 // Fungsi untuk menentukan status pembayaran
 const determineStatus = (
@@ -176,6 +162,7 @@ const AngsuranUpdateForm: React.FC<AngsuranFormProps> = ({
         );
       }
     } catch (error) {
+      console.log(error);
       message.error("Gagal terhubung ke server.");
     } finally {
       setLoading(false);
@@ -381,12 +368,15 @@ export default function AngsuranManagementPage() {
       message.success(`Jadwal Angsuran ${id} berhasil dihapus (simulasi)!`);
       await getData();
     } catch (error: any) {
+      console.log(error);
       message.error(`Gagal menghapus jadwal angsuran!`);
     }
   };
 
   useEffect(() => {
-    getData();
+    (async () => {
+      await getData();
+    })();
   }, [pageProps.page, pageProps.pageSize, pageProps.filters]);
 
   const getStatusColor = (status: Angsuran["statusPembayaran"]) => {

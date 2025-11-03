@@ -10,14 +10,12 @@ import {
   Card,
   message,
   Alert,
-  Switch,
   Space,
   Upload,
 } from "antd";
 import {
   User,
   Lock,
-  Settings,
   Mail,
   Phone,
   Image as ImageIcon,

@@ -402,7 +402,7 @@ export default function CreditSimulationPage() {
                     ]}
                   >
                     <InputNumber<number>
-                      min={4} // Minimal 1 bulan
+                      min={0} // Minimal 1 bulan
                       max={selectedProduct?.max_tenor || 10} // Maksimal 3 tahun
                       step={4}
                       style={{ width: "100%" }}

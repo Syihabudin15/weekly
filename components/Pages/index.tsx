@@ -31,6 +31,13 @@ export const PengajuanPage = dynamic(
     loading: () => <LoaderCircle size={15} />,
   }
 );
+export const UpsertPengajuan = dynamic(
+  () => import("@/components/Pages/UpsertPengajuan"),
+  {
+    ssr: false,
+    loading: () => <LoaderCircle size={15} />,
+  }
+);
 export const DetailPengajuan = dynamic(
   () => import("@/components/Pages/DetailPengajuan"),
   {

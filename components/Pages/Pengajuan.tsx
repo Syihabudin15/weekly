@@ -18,6 +18,7 @@ import {
   Popconfirm,
   Divider,
   Statistic,
+  TableProps,
 } from "antd";
 import {
   PlusOutlined,
@@ -188,7 +189,29 @@ const MOCK_APPLICATIONS = [
     ],
   },
 ];
+const RupiahInput = (props) => (
+  <InputNumber
+    formatter={(value) => `Rp ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
+    parser={(value) => value && value.replace(/\Rp\s?|(,*)/g, "")}
+    min={0}
+    step={100000}
+    className="w-full"
+    {...props}
+  />
+);
 
+// Fungsi pembantu untuk format Persen pada InputNumber
+const PercentInput = (props) => (
+  <InputNumber
+    formatter={(value) => `${value}%`}
+    parser={(value) => value && value.replace("%", "")}
+    min={1}
+    max={30}
+    step={0.1}
+    className="w-full"
+    {...props}
+  />
+);
 // --- Mock Form Component for New/Edit ---
 const ApplicationFormModal = ({
   visible,
@@ -233,29 +256,6 @@ const ApplicationFormModal = ({
     limits;
 
   // Fungsi pembantu untuk format Rupiah pada InputNumber
-  const RupiahInput = (props) => (
-    <InputNumber
-      formatter={(value) => `Rp ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
-      parser={(value) => value.replace(/\Rp\s?|(,*)/g, "")}
-      min={0}
-      step={100000}
-      className="w-full"
-      {...props}
-    />
-  );
-
-  // Fungsi pembantu untuk format Persen pada InputNumber
-  const PercentInput = (props) => (
-    <InputNumber
-      formatter={(value) => `${value}%`}
-      parser={(value) => value.replace("%", "")}
-      min={1}
-      max={30}
-      step={0.1}
-      className="w-full"
-      {...props}
-    />
-  );
 
   const handleOk = () => {
     form
@@ -445,7 +445,7 @@ const ApplicationFormModal = ({
                   <Form.Item
                     {...restField}
                     name={[name, "name"]}
-                    fieldKey={[fieldKey, "name"]}
+                    fieldKey={[fieldKey || "", "name"]}
                     rules={[{ required: true, message: "Nama Wajib" }]}
                     style={{ width: 180 }}
                   >
@@ -454,7 +454,7 @@ const ApplicationFormModal = ({
                   <Form.Item
                     {...restField}
                     name={[name, "relationship"]}
-                    fieldKey={[fieldKey, "relationship"]}
+                    fieldKey={[fieldKey || "", "relationship"]}
                     rules={[{ required: true, message: "Hubungan Wajib" }]}
                     style={{ width: 150 }}
                   >
@@ -468,7 +468,7 @@ const ApplicationFormModal = ({
                   <Form.Item
                     {...restField}
                     name={[name, "birthYear"]}
-                    fieldKey={[fieldKey, "birthYear"]}
+                    fieldKey={[fieldKey || "", "birthYear"]}
                     rules={[{ required: true, message: "Tahun Lahir Wajib" }]}
                     style={{ width: 120 }}
                   >
@@ -652,7 +652,7 @@ const ApplicationListManagement = () => {
   const [loading, setLoading] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [editingApplication, setEditingApplication] = useState(null);
+  const [editingApplication, setEditingApplication] = useState<any>(null);
 
   // --- CRUD Handlers ---
 
@@ -665,12 +665,16 @@ const ApplicationListManagement = () => {
       // Logika Edit
       setApplications((prev) =>
         prev.map((app) =>
-          app.id === editingApplication.id ? { ...app, ...values } : app
+          editingApplication && app.id === editingApplication.id
+            ? { ...app, ...values }
+            : app
         )
       );
       notification.success({
         message: "Berhasil",
-        description: `Pengajuan #${editingApplication.id} berhasil diperbarui.`,
+        description: `Pengajuan #${
+          editingApplication && editingApplication.id
+        } berhasil diperbarui.`,
       });
     } else {
       // Logika Input Baru
@@ -949,11 +953,11 @@ const ApplicationListManagement = () => {
 
         <Spin spinning={loading} tip="Memuat atau memproses data...">
           <Table
-            columns={columns}
+            columns={columns as TableProps["columns"]}
             dataSource={applications.map((app) => ({ ...app, key: app.id }))}
             pagination={{ pageSize: 10 }}
             bordered
-            responsive
+            // responsive={true}
             size="middle"
             scroll={{ x: 1200, y: 320 }} // Sesuaikan scroll horizontal
           />

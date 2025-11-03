@@ -1,15 +1,14 @@
-import React, { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   Table,
   Card,
   Tag,
   Space,
   Typography,
-  Row,
-  Col,
   Spin,
   Tooltip,
   Input,
+  TableProps,
 } from "antd";
 import {
   CheckCircleOutlined,
@@ -169,7 +168,7 @@ const ApplicationStatusMonitoring = () => {
         key: "action",
         fixed: "right",
         width: 100,
-        render: (text, record) => (
+        render: () => (
           <Space size="middle">
             <Text className="text-blue-500 cursor-pointer hover:underline">
               Detail
@@ -182,10 +181,10 @@ const ApplicationStatusMonitoring = () => {
   );
 
   // Hitung total pengajuan dari summary
-  const totalApplications = data.summary.reduce(
-    (sum, item) => sum + item.count,
-    0
-  );
+  // const totalApplications = data.summary.reduce(
+  //   (sum, item) => sum + item.count,
+  //   0
+  // );
 
   return (
     <div className="bg-gray-50">
@@ -219,7 +218,7 @@ const ApplicationStatusMonitoring = () => {
             />
           </div>
           <Table
-            columns={columns}
+            columns={columns as TableProps["columns"]}
             dataSource={data.recent}
             pagination={{ pageSize: 10 }}
             scroll={{ x: 800, y: 320 }}

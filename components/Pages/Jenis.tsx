@@ -93,6 +93,7 @@ const JenisManagementForm: React.FC<JenisFormProps> = ({
         );
       }
     } catch (error) {
+      console.log(error);
       message.error("Gagal terhubung ke server.");
     } finally {
       setLoading(false);

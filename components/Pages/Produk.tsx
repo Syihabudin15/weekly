@@ -94,6 +94,7 @@ const ProdukManagementForm: React.FC<ProdukFormProps> = ({
         );
       }
     } catch (error) {
+      console.log(error);
       message.error("Gagal terhubung ke server.");
     } finally {
       setLoading(false);
@@ -457,7 +458,7 @@ export default function ProdukManagementPage() {
       title: "Biaya Biaya",
       dataIndex: "by",
       key: "by",
-      render(value, record, index) {
+      render(value, record) {
         return (
           <Space direction="vertical" size={0}>
             <Text type="secondary" style={{ fontSize: "12px" }}>
