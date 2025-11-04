@@ -39,7 +39,8 @@ import {
 } from "../Util";
 import { useEffect, useState } from "react";
 import { Jenis, Produk } from "@prisma/client";
-import { CalculationInputs, CalculationResults } from "../Interface";
+import { CalculationInputs, CalculationResults, IDapem } from "../Interface";
+import { useSession } from "next-auth/react";
 const { Title, Text } = Typography;
 const { Option } = Select;
 const { TextArea } = Input;
@@ -58,7 +59,14 @@ interface IOptionWilayah {
   village: IWilayah[];
 }
 
-export default function UpsertPengajuan() {
+export default function UpsertPengajuan({
+  data,
+  deviasi,
+}: {
+  data?: IDapem;
+  deviasi?: boolean;
+}) {
+  const { data: session } = useSession();
   const [form] = Form.useForm();
   const [jeniss, setJeniss] = useState<Jenis[]>([]);
   const [products, setProducts] = useState<Produk[]>([]);
@@ -82,6 +90,13 @@ export default function UpsertPengajuan() {
   const handleProductChange = (productId: string) => {
     const selectedProduct = products.find((p) => p.id === productId);
     setSelectedProduct(selectedProduct || null);
+    form.setFieldsValue({
+      margin: selectedProduct ? selectedProduct.margin : 0,
+      by_admin: selectedProduct ? selectedProduct.by_admin : 0,
+      by_tatalaksana: selectedProduct ? selectedProduct.by_tatalaksana : 0,
+      by_tabungan: selectedProduct ? selectedProduct.by_tabungan : 0,
+      by_materai: selectedProduct ? selectedProduct.by_materai : 0,
+    });
   };
   const handleJenisChange = (jenisId: string) => {
     const selectedJenis = jeniss.find((p) => p.id === jenisId);
@@ -104,18 +119,22 @@ export default function UpsertPengajuan() {
 
     const {
       plafon,
-      tenorWeeks,
-      annualMarginRate,
+      tenor,
+      margin,
       produkId,
       jenisId,
       salary,
       pelunasan,
+      by_admin,
+      by_tatalaksana,
+      by_tabungan,
+      by_materai,
     } = values;
 
     if (
       plafon <= 0 ||
-      tenorWeeks <= 0 ||
-      annualMarginRate < 0 ||
+      tenor <= 0 ||
+      margin < 0 ||
       !produkId ||
       !jenisId ||
       !selectedJenis ||
@@ -130,18 +149,16 @@ export default function UpsertPengajuan() {
 
     try {
       // 1. Hitung Angsuran Mingguan
-      const weeklyPayment = calculateWeeklyPayment(
-        plafon,
-        annualMarginRate,
-        tenorWeeks
+      const weeklyPayment = parseInt(
+        calculateWeeklyPayment(plafon, margin, tenor).toFixed(0)
       );
       setWeeklyInstallment(weeklyPayment);
 
       // 2. Hitung Biaya-Biaya di Awal (Sama seperti skema bulanan, berdasarkan Plafon)
-      const byAdmin = plafon * (selectedProduct.by_admin / 100);
-      const byTabungan = selectedProduct.by_tabungan;
-      const byTatalaksana = plafon * (selectedProduct.by_tatalaksana / 100);
-      const byMaterai = selectedProduct.by_materai;
+      const byAdmin = plafon * (by_admin / 100);
+      const byTabungan = by_tabungan;
+      const byTatalaksana = plafon * (by_tatalaksana / 100);
+      const byMaterai = by_materai;
 
       const totalBiayaAwal =
         byAdmin + byTabungan + byTatalaksana + byMaterai + pelunasan;
@@ -222,13 +239,60 @@ export default function UpsertPengajuan() {
       setProducts(dataProduk);
       setJeniss(dataJenis);
     })();
+    if (data) {
+      onCekSimulasi(form.getFieldsValue() as CalculationInputs);
+    }
   }, []);
+
+  const handleFinish = async (e: IDapem) => {
+    setLoading(true);
+    e.createdById = session ? session.user.id : "";
+    if (data) {
+      e.createdById = data.createdById;
+      e.approvedById = data.approvedById;
+    }
+    await fetch(`/api/dapem`, {
+      method: "POST",
+      body: JSON.stringify({
+        ...e,
+        Produk: selectedProduct,
+        Jenis: selectedJenis,
+      }),
+    })
+      .then((res) => res.json())
+      .then((res) => {
+        if (res.status === 200) {
+          message.success("Data pengajuan berhasil ditambahkan");
+          window.location.href = "/pengajuan";
+        } else {
+          console.log({ res });
+          message.error(res.msg);
+        }
+      })
+      .catch((err) => {
+        console.log(err);
+        message.error("Internal Server Error");
+      });
+    setLoading(false);
+  };
+
   return (
     <div className="bg-white p-2 rounded-lg">
       <Form
         form={form}
         layout="vertical"
-        initialValues={{ tenor: 0, status_sub: "DRAFT", familyMembers: [] }}
+        initialValues={
+          data
+            ? { ...data }
+            : {
+                tenor: 0,
+                status_sub: "DRAFT",
+                DataKeluarga: [],
+                margin: 0,
+                pelunasan: 0,
+              }
+        }
+        onFinish={handleFinish}
       >
         <Space>
           <User size={16} />
@@ -239,7 +303,7 @@ export default function UpsertPengajuan() {
         <Row gutter={[24, 24]}>
           <Col xs={12} lg={6}>
             <Form.Item
-              name="name"
+              name={["DataDebitur", "name"]}
               label="Nama Debitur"
               rules={[
                 { required: true, message: "Wajib mengisi nama debitur" },
@@ -250,7 +314,7 @@ export default function UpsertPengajuan() {
           </Col>
           <Col xs={12} lg={6}>
             <Form.Item
-              name="nik"
+              name={["DataDebitur", "nik"]}
               label="NIK"
               rules={[
                 {
@@ -268,7 +332,7 @@ export default function UpsertPengajuan() {
           </Col>
           <Col xs={12} lg={6}>
             <Form.Item
-              name="tanggal_lahir"
+              name={["DataDebitur", "tanggal_lahir"]}
               label="Tanggal Lahir"
               rules={[
                 { required: true, message: "Wajib mengisi tanggal lahir" },
@@ -307,7 +371,7 @@ export default function UpsertPengajuan() {
         <Row gutter={[24, 24]}>
           <Col xs={12} lg={6}>
             <Form.Item
-              name="provinsi"
+              name={["DataDebitur", "provinsi"]}
               label="Provinsi"
               rules={[
                 { required: true, message: "Wajib memilih jenis kelamin" },
@@ -337,7 +401,7 @@ export default function UpsertPengajuan() {
           </Col>
           <Col xs={12} lg={6}>
             <Form.Item
-              name="kota"
+              name={["DataDebitur", "kota"]}
               label="Kota/Kabupaten"
               rules={[{ required: true, message: "Wajib memilih kota" }]}
             >
@@ -363,7 +427,7 @@ export default function UpsertPengajuan() {
           </Col>
           <Col xs={12} lg={6}>
             <Form.Item
-              name="kecamatan"
+              name={["DataDebitur", "kecamatan"]}
               label="Kecamatan"
               rules={[{ required: true, message: "Wajib memilih kecamatan" }]}
             >
@@ -387,7 +451,7 @@ export default function UpsertPengajuan() {
           </Col>
           <Col xs={12} lg={6}>
             <Form.Item
-              name="Kelurahan"
+              name={["DataDebitur", "kelurahan"]}
               label="Kelurahan/Desa"
               rules={[{ required: true, message: "Wajib memilih kelurahan" }]}
             >
@@ -404,7 +468,7 @@ export default function UpsertPengajuan() {
         <Row gutter={[24, 24]}>
           <Col xs={12} lg={6}>
             <Form.Item
-              name="alamat"
+              name={["DataDebitur", "alamat"]}
               label="Alamat Rumah"
               rules={[
                 { required: true, message: "Wajib mengisi alamat rumah" },
@@ -415,7 +479,7 @@ export default function UpsertPengajuan() {
           </Col>
           <Col xs={12} lg={6}>
             <Form.Item
-              name="kode_pos"
+              name={["DataDebitur", "kode_pos"]}
               label="Kode Pos"
               rules={[{ required: true, message: "Wajib mengisi kode pos" }]}
             >
@@ -424,7 +488,7 @@ export default function UpsertPengajuan() {
           </Col>
           <Col xs={12} lg={6}>
             <Form.Item
-              name="jenis_kelamin"
+              name={["DataDebitur", "jenis_kelamin"]}
               label="Jenis Kelamin"
               rules={[
                 { required: true, message: "Wajib memilih jenis kelamin" },
@@ -438,7 +502,7 @@ export default function UpsertPengajuan() {
           </Col>
           <Col xs={12} lg={6}>
             <Form.Item
-              name="status_kawin"
+              name={["DataDebitur", "status_kawin"]}
               label="Status Kawin"
               rules={[
                 { required: true, message: "Wajib memilih status kawin" },
@@ -463,60 +527,74 @@ export default function UpsertPengajuan() {
             Data Keluarga (Kontak Darurat)
           </Title>
         </Space>
-        <Form.List name="familyMembers">
+        <Form.List name={["DataDebitur", "DataKaluarga"]}>
           {(fields, { add, remove }) => (
             <>
               {fields.map(({ key, name, fieldKey, ...restField }) => (
-                <Space
-                  key={key}
-                  style={{ display: "flex", marginBottom: 8 }}
-                  align="baseline"
-                >
+                <Row gutter={[24, 24]} key={key}>
                   <Form.Item
                     {...restField}
-                    name={[name, "name"]}
-                    fieldKey={[fieldKey || "", "name"]}
-                    rules={[{ required: true, message: "Nama Wajib diisi" }]}
-                    style={{ width: 130 }}
+                    name={[name, "id"]}
+                    fieldKey={[fieldKey || "", "id"]}
+                    rules={[{ required: false, message: "Nama Wajib diisi" }]}
+                    // style={{ width: 130 }}
+                    hidden
                   >
                     <Input placeholder="Nama Anggota Keluarga" />
                   </Form.Item>
-                  <Form.Item
-                    {...restField}
-                    name={[name, "hubunagan"]}
-                    fieldKey={[fieldKey || "", "hubunagan"]}
-                    rules={[
-                      { required: true, message: "Hubungan Wajib diisi" },
-                    ]}
-                    style={{ width: 120 }}
-                  >
-                    <Select placeholder="Hubungan">
-                      <Option value="Istri">Istri/Suami</Option>
-                      <Option value="Anak Kandung">Anak Kandung</Option>
-                      <Option value="Orang Tua">Orang Tua</Option>
-                      <Option value="Lainnya">Lainnya</Option>
-                    </Select>
-                  </Form.Item>
-                  <Form.Item
-                    {...restField}
-                    name={[name, "no_telepon"]}
-                    fieldKey={[fieldKey || "", "no_telepon"]}
-                    rules={[
-                      { required: true, message: "No Telepon Wajib diisi" },
-                    ]}
-                    style={{ width: 130 }}
-                  >
-                    <Input
-                      minLength={0}
-                      maxLength={15}
-                      placeholder="No Telepon"
+                  <Col xs={12} lg={6}>
+                    <Form.Item
+                      {...restField}
+                      name={[name, "name"]}
+                      fieldKey={[fieldKey || "", "name"]}
+                      rules={[{ required: true, message: "Nama Wajib diisi" }]}
+                      // style={{ width: 130 }}
+                    >
+                      <Input placeholder="Nama Anggota Keluarga" />
+                    </Form.Item>
+                  </Col>
+                  <Col xs={12} lg={6}>
+                    <Form.Item
+                      {...restField}
+                      name={[name, "hubunagan"]}
+                      fieldKey={[fieldKey || "", "hubunagan"]}
+                      rules={[
+                        { required: true, message: "Hubungan Wajib diisi" },
+                      ]}
+                      // style={{ width: 120 }}
+                    >
+                      <Select placeholder="Hubungan">
+                        <Option value="Istri">Istri/Suami</Option>
+                        <Option value="Anak Kandung">Anak Kandung</Option>
+                        <Option value="Orang Tua">Orang Tua</Option>
+                        <Option value="Lainnya">Lainnya</Option>
+                      </Select>
+                    </Form.Item>
+                  </Col>
+                  <Col xs={12} lg={6}>
+                    <Form.Item
+                      {...restField}
+                      name={[name, "no_telepon"]}
+                      fieldKey={[fieldKey || "", "no_telepon"]}
+                      rules={[
+                        { required: true, message: "No Telepon Wajib diisi" },
+                      ]}
+                      // style={{ width: 130 }}
+                    >
+                      <Input
+                        minLength={0}
+                        maxLength={15}
+                        placeholder="No Telepon"
+                      />
+                    </Form.Item>
+                  </Col>
+                  <Col xs={12} lg={6}>
+                    <MinusCircle
+                      onClick={() => remove(name)}
+                      className="text-red-500"
                     />
-                  </Form.Item>
-                  <MinusCircle
-                    onClick={() => remove(name)}
-                    className="text-red-500"
-                  />
-                </Space>
+                  </Col>
+                </Row>
               ))}
               <Form.Item>
                 <Button
@@ -531,15 +609,8 @@ export default function UpsertPengajuan() {
             </>
           )}
         </Form.List>
-        <Form.Item
-          name="description"
-          label="Tujuan Penggunaan"
-          className="mt-4"
-        >
-          <TextArea
-            rows={2}
-            placeholder="Tujuan pengajuan pembiayaan: modal kerja, kebutuhan konsumtif, dll."
-          />
+        <Form.Item name="description" label="Keterangan" className="mt-4">
+          <TextArea rows={2} placeholder="Keterangan tambahan (optinal)" />
         </Form.Item>
         <Divider />
         <Space>
@@ -646,7 +717,7 @@ export default function UpsertPengajuan() {
                 <Col span={12}>
                   {/* Tenor (Minggu) */}
                   <Form.Item
-                    name="tenorWeeks"
+                    name="tenor"
                     label={
                       <Space>
                         <Clock size={16} /> Tenor (Minggu)
@@ -677,61 +748,6 @@ export default function UpsertPengajuan() {
                   </Form.Item>
                 </Col>
               </Row>
-              <Form.Item
-                name="pelunasan"
-                label={
-                  <Space>
-                    <DollarSign size={16} /> Pelunasan (Rp)
-                  </Space>
-                }
-                rules={[
-                  {
-                    required: true,
-                    message: "Masukkan jumlah pelunasan!",
-                  },
-                ]}
-                hidden={selectedJenis && selectedJenis.pelunasan ? false : true}
-              >
-                <InputNumber<number>
-                  min={0}
-                  step={500000}
-                  formatter={formatterRupiah}
-                  parser={(displayValue) => {
-                    const cleanValue = displayValue
-                      ? displayValue.replace(/[^0-9]/g, "")
-                      : "0";
-                    return parseFloat(cleanValue) || 0;
-                  }}
-                  className="w-full"
-                  style={{ width: "100%" }}
-                />
-              </Form.Item>
-              <Form.Item
-                name="annualMarginRate"
-                hidden
-                label={
-                  <Space>
-                    <Percent size={16} /> Margin (% Per Tahun)
-                  </Space>
-                }
-                rules={[
-                  { required: true, message: "Masukkan persentase margin!" },
-                ]}
-              >
-                <InputNumber<number>
-                  min={0.1}
-                  max={50}
-                  step={0.1}
-                  formatter={(value) => `${value}%`}
-                  parser={(displayValue) => {
-                    const cleanValue = displayValue
-                      ? displayValue.replace("%", "")
-                      : "0";
-                    return parseFloat(cleanValue) || 0;
-                  }}
-                  className="w-full"
-                />
-              </Form.Item>
               {selectedProduct && (
                 <div className="italic mb-1">
                   <div className="flex justify-between">
@@ -744,6 +760,199 @@ export default function UpsertPengajuan() {
                   </div>
                 </div>
               )}
+              <Row gutter={[24, 24]} hidden={!deviasi}>
+                <Col span={12}>
+                  <Form.Item
+                    name="by_admin"
+                    label={
+                      <Space>
+                        <Percent size={16} /> Administrasi (%)
+                      </Space>
+                    }
+                    rules={[
+                      {
+                        required: true,
+                        message: "Masukkan persentase biaya admin!",
+                      },
+                    ]}
+                  >
+                    <InputNumber<number>
+                      min={0.1}
+                      max={50}
+                      step={0.1}
+                      formatter={(value) => `${value}%`}
+                      parser={(displayValue) => {
+                        const cleanValue = displayValue
+                          ? displayValue.replace("%", "")
+                          : "0";
+                        return parseFloat(cleanValue) || 0;
+                      }}
+                      className="w-full"
+                    />
+                  </Form.Item>
+                </Col>
+                <Col span={12}>
+                  <Form.Item
+                    name="by_tatalaksana"
+                    label={
+                      <Space>
+                        <Percent size={16} /> Tatalaksana (%)
+                      </Space>
+                    }
+                    rules={[
+                      {
+                        required: true,
+                        message: "Masukkan persentase biaya tatalaksana!",
+                      },
+                    ]}
+                  >
+                    <InputNumber<number>
+                      min={0.1}
+                      max={50}
+                      step={0.1}
+                      formatter={(value) => `${value}%`}
+                      parser={(displayValue) => {
+                        const cleanValue = displayValue
+                          ? displayValue.replace("%", "")
+                          : "0";
+                        return parseFloat(cleanValue) || 0;
+                      }}
+                      className="w-full"
+                    />
+                  </Form.Item>
+                </Col>
+              </Row>
+              <Row gutter={[24, 24]} hidden={!deviasi}>
+                <Col span={12}>
+                  <Form.Item
+                    name="by_tabungan"
+                    label={
+                      <Space>
+                        <DollarSign size={16} /> Tabungan (Rp)
+                      </Space>
+                    }
+                    rules={[
+                      {
+                        required: true,
+                        message: "Masukkan jumlah tabungan!",
+                      },
+                    ]}
+                  >
+                    <InputNumber<number>
+                      min={0}
+                      step={100000}
+                      formatter={formatterRupiah}
+                      parser={(displayValue) => {
+                        const cleanValue = displayValue
+                          ? displayValue.replace(/[^0-9]/g, "")
+                          : "0";
+                        return parseFloat(cleanValue) || 0;
+                      }}
+                      className="w-full"
+                      style={{ width: "100%" }}
+                    />
+                  </Form.Item>
+                </Col>
+                <Col span={12}>
+                  <Form.Item
+                    name="by_materai"
+                    label={
+                      <Space>
+                        <DollarSign size={16} /> Materai (Rp)
+                      </Space>
+                    }
+                    rules={[
+                      {
+                        required: true,
+                        message: "Masukkan jumlah materai!",
+                      },
+                    ]}
+                  >
+                    <InputNumber<number>
+                      min={0}
+                      step={100000}
+                      formatter={formatterRupiah}
+                      parser={(displayValue) => {
+                        const cleanValue = displayValue
+                          ? displayValue.replace(/[^0-9]/g, "")
+                          : "0";
+                        return parseFloat(cleanValue) || 0;
+                      }}
+                      className="w-full"
+                      style={{ width: "100%" }}
+                    />
+                  </Form.Item>
+                </Col>
+              </Row>
+              <Row gutter={[24, 24]}>
+                <Col
+                  span={12}
+                  hidden={
+                    selectedJenis && selectedJenis.pelunasan ? false : true
+                  }
+                >
+                  <Form.Item
+                    name="pelunasan"
+                    label={
+                      <Space>
+                        <DollarSign size={16} /> Pelunasan (Rp)
+                      </Space>
+                    }
+                    rules={[
+                      {
+                        required: true,
+                        message: "Masukkan jumlah pelunasan!",
+                      },
+                    ]}
+                  >
+                    <InputNumber<number>
+                      min={0}
+                      step={500000}
+                      formatter={formatterRupiah}
+                      parser={(displayValue) => {
+                        const cleanValue = displayValue
+                          ? displayValue.replace(/[^0-9]/g, "")
+                          : "0";
+                        return parseFloat(cleanValue) || 0;
+                      }}
+                      className="w-full"
+                      style={{ width: "100%" }}
+                    />
+                  </Form.Item>
+                </Col>
+                <Col span={12} hidden={!deviasi}>
+                  <Form.Item
+                    name="margin"
+                    hidden
+                    label={
+                      <Space>
+                        <Percent size={16} /> Margin (% Per Tahun)
+                      </Space>
+                    }
+                    rules={[
+                      {
+                        required: true,
+                        message: "Masukkan persentase margin!",
+                      },
+                    ]}
+                  >
+                    <InputNumber<number>
+                      min={0.1}
+                      max={50}
+                      step={0.1}
+                      formatter={(value) => `${value}%`}
+                      parser={(displayValue) => {
+                        const cleanValue = displayValue
+                          ? displayValue.replace("%", "")
+                          : "0";
+                        return parseFloat(cleanValue) || 0;
+                      }}
+                      className="w-full"
+                    />
+                  </Form.Item>
+                </Col>
+              </Row>
+
               <Form.Item>
                 <Button
                   type="primary"
@@ -753,7 +962,9 @@ export default function UpsertPengajuan() {
                   size="large"
                   icon={<Zap size={20} />}
                   onClick={() =>
-                    onCekSimulasi(form as any as CalculationInputs)
+                    onCekSimulasi(
+                      form.getFieldsValue() as any as CalculationInputs
+                    )
                   }
                 >
                   {loading ? "Menghitung..." : "Hitung Simulasi"}
@@ -774,23 +985,18 @@ export default function UpsertPengajuan() {
                 <Row gutter={[16, 16]}>
                   {/* Angsuran Mingguan */}
                   <Col xs={24} lg={8}>
-                    <div className="bg-blue-50 p-4 rounded-lg text-center border-l-4 border-blue-500">
+                    <div className="bg-blue-50 p-2 rounded-lg text-center border-l-4 border-blue-500">
                       <Text type="secondary" className="block text-sm">
                         Plafon Pinjaman
                       </Text>{" "}
                       <Title level={4} className="mb-0 mt-1 text-blue-700">
-                        {weeklyInstallment && form.getFieldValue("tenorWeeks")
-                          ? formatterRupiah(
-                              weeklyInstallment *
-                                form.getFieldValue("tenorWeeks")
-                            )
-                          : "Rp 0"}
+                        {formatterRupiah(form.getFieldValue("plafon"))}
                       </Title>
                     </div>
                   </Col>
                   {/* Total Margin */}
                   <Col xs={24} lg={8}>
-                    <div className="bg-green-50 p-4 rounded-lg text-center border-l-4 border-green-500">
+                    <div className="bg-green-50 p-2 rounded-lg text-center border-l-4 border-green-500">
                       <Text type="secondary" className="block text-sm">
                         Terima Bersih
                       </Text>
@@ -801,9 +1007,9 @@ export default function UpsertPengajuan() {
                   </Col>
                   {/* Total Pembayaran */}
                   <Col xs={24} lg={8}>
-                    <div className="bg-red-50 p-4 rounded-lg text-center border-l-4 border-red-500">
+                    <div className="bg-red-50 p-2 rounded-lg text-center border-l-4 border-red-500">
                       <Text type="secondary" className="block text-sm">
-                        Angsuran Mingguan
+                        Angsuran
                       </Text>
                       <Title level={4} className="mb-0 mt-1 text-red-700">
                         {weeklyInstallment

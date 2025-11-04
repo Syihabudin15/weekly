@@ -106,7 +106,7 @@ const ProdukManagementForm: React.FC<ProdukFormProps> = ({
       open={isModalVisible}
       title={title}
       onCancel={() => setIsModalVisible(false)}
-      width={700}
+      width={800}
       footer={[
         <Button key="back" onClick={() => setIsModalVisible(false)}>
           Batal

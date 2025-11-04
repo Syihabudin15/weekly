@@ -103,9 +103,17 @@ export function usePermission() {
   };
 }
 
-export const formatterRupiah = (value: number | string | undefined) =>
-  value ? `Rp ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ".") : "";
-// FIX 1: Ensure parserRupiah returns a number or undefined
+export const formatterRupiah = (value: number | string | undefined) => {
+  if (value === null || value === undefined) {
+    return "Rp 0";
+  }
+  const numValue = Number(value);
+  if (isNaN(numValue)) {
+    console.error("Formatter received a non-numeric value:", value);
+    return "Rp 0 (Invalid)";
+  }
+  return `Rp ${numValue.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ".")}`;
+};
 
 export const formatterPercent = (value: number | string | undefined) =>
   value ? `${value} %` : "";

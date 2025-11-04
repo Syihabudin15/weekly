@@ -1,3 +1,13 @@
+import {
+  Dapem,
+  DataDebitur,
+  DataKeluarga,
+  JadwalAngsuran,
+  Jenis,
+  Produk,
+  User,
+} from "@prisma/client";
+
 export interface IPermission {
   path: string;
   name: string;
@@ -15,12 +25,16 @@ export interface IPageProps<T> {
 
 export interface CalculationInputs {
   plafon: number;
-  tenorWeeks: number; // TENOR DALAM MINGGU
-  annualMarginRate: number;
+  tenor: number; // TENOR DALAM MINGGU
+  margin: number;
   produkId: string;
   jenisId: string;
   salary: number;
   pelunasan: number;
+  by_admin: number;
+  by_tatalaksana: number;
+  by_tabungan: number;
+  by_materai: number;
 }
 
 export interface CalculationResults {
@@ -34,4 +48,17 @@ export interface CalculationResults {
   byTatalaksana: number;
   byMaterai: number;
   pelunasan: number;
+}
+
+interface IDataDebitur extends DataDebitur {
+  DataKeluarga: DataKeluarga[];
+}
+export interface IDapem extends Dapem {
+  // DataKeluarga: DataKeluarga[];
+  DataDebitur: IDataDebitur;
+  Produk: Produk;
+  Jenis: Jenis;
+  CreatedBy: User;
+  ApprovedBy: User;
+  JadwalAngsuran: JadwalAngsuran[];
 }
