@@ -31,7 +31,11 @@ import {
   Scale,
 } from "lucide-react";
 import { Jenis, Produk } from "@prisma/client";
-import { formatterPercent, formatterRupiah } from "../Util";
+import {
+  calculateWeeklyPayment,
+  formatterPercent,
+  formatterRupiah,
+} from "../Util";
 
 const { Title, Text } = Typography;
 
@@ -58,16 +62,6 @@ interface CalculationResults {
   pelunasan: number;
 }
 
-const calculateWeeklyPayment = (
-  principal: number,
-  annualRate: number,
-  tenorWeeks: number
-): number => {
-  const totalMargin = principal * (annualRate / 100) * (tenorWeeks / 52);
-  const totalRepayment = principal + totalMargin;
-  const weeklyPayment = totalRepayment / tenorWeeks; // Total Pengembalian dibagi Tenor (Minggu)
-  return weeklyPayment;
-};
 const convertWeeklyToMonthlyPayment = (weeklyPayment: number): number => {
   // return weeklyPayment * (52 / 12);
   return weeklyPayment * 4;
@@ -101,6 +95,9 @@ export default function CreditSimulationPage() {
 
   const handleProductChange = (productId: string) => {
     const selectedProduct = producs.find((p) => p.id === productId);
+    if (selectedProduct) {
+      form.setFieldValue("annualMarginRate", selectedProduct.margin);
+    }
     setSelectedProduct(selectedProduct || null);
   };
   const handleJenisChange = (jenisId: string) => {

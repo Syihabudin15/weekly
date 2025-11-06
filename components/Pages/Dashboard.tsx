@@ -54,123 +54,11 @@ const formatLargeNumber = (num: number) => {
   return num.toString();
 };
 
-// =========================================================================
-// MOCK API FUNCTION
-// =========================================================================
-
-// Fungsi untuk mensimulasikan pemanggilan API (API Mock)
 const fetchMonitoringData = async () => {
-  // Simulasi delay jaringan/API selama 1.5 detik
-  await new Promise((resolve) => setTimeout(resolve, 1500));
-
-  // Data Mockup Dashboard - Ini adalah "response" dari API
-  const mockKPIs = {
-    totalPlafon: 8000000000,
-    totalDebitur: 1050,
-    totalOutstanding: 6500000000,
-    totalBilled: 500000000,
-    nplRate: 3.25,
-    // Nominal NPL dihitung dari Total Outstanding * NPL Rate
-    nominalNPL: 6500000000 * 0.0325,
-  };
-
-  const mockProductDistribution = [
-    { name: "Multiguna", value: 4000000000, color: "#3b82f6" },
-    { name: "Modal Kerja", value: 2500000000, color: "#f59e0b" },
-    { name: "Investasi", value: 1500000000, color: "#10b981" },
-  ];
-
-  const mockAgingData = [
-    {
-      group: "Lancar (0)",
-      debtors: 950,
-      outstanding: 6000000000,
-      color: "#10b981",
-    },
-    {
-      group: "Kurang Lancar (1-30)",
-      debtors: 50,
-      outstanding: 300000000,
-      color: "#f59e0b",
-    },
-    {
-      group: "Diragukan (31-90)",
-      debtors: 35,
-      outstanding: 150000000,
-      color: "#f97316",
-    },
-    {
-      group: "Macet (> 90)",
-      debtors: 15,
-      outstanding: 50000000,
-      color: "#ef4444",
-    },
-  ];
-
-  const mockProblemAccounts = [
-    {
-      key: "1",
-      account: "TRX/003/24",
-      customer: "Dewi Anggraini",
-      plafon: 450000000,
-      overdueDays: 125,
-      collector: "Ani",
-      installmentNumber: 8,
-      installmentNominal: 50000000,
-    },
-    {
-      key: "2",
-      account: "TRX/012/24",
-      customer: "Fajar Kurniawan",
-      plafon: 15000000,
-      overdueDays: 45,
-      collector: "Bima",
-      installmentNumber: 3,
-      installmentNominal: 1500000,
-    },
-    {
-      key: "3",
-      account: "TRX/008/24",
-      customer: "Siti Rahma",
-      plafon: 75000000,
-      overdueDays: 32,
-      collector: "Ani",
-      installmentNumber: 15,
-      installmentNominal: 2500000,
-    },
-    {
-      key: "4",
-      account: "TRX/021/24",
-      customer: "Joko Susilo",
-      plafon: 120000000,
-      overdueDays: 95,
-      collector: "Cahyo",
-      installmentNumber: 6,
-      installmentNominal: 10000000,
-    },
-    {
-      key: "5",
-      account: "TRX/001/24",
-      customer: "Budi Santoso",
-      plafon: 50000000,
-      overdueDays: 7,
-      collector: "Bima",
-      installmentNumber: 2,
-      installmentNominal: 8000000,
-    },
-  ];
-
-  return {
-    kpis: mockKPIs,
-    productDistribution: mockProductDistribution,
-    agingData: mockAgingData,
-    problemAccounts: mockProblemAccounts,
-  };
+  const res = await fetch("/api");
+  if (!res.ok) throw new Error("Fetch failed");
+  return res.json();
 };
-
-// =========================================================================
-// COMPONENTS
-// =========================================================================
 
 // 1. Komponen Kartu KPI
 const KpiCard = ({
@@ -202,7 +90,9 @@ const KpiCard = ({
         suffix={unit}
         valueStyle={{ color: color || "#2563eb", fontSize: "24px" }}
         // Menggunakan Math.round untuk menghindari tampilan desimal pada Rupiah kecuali NPL Rate
-        formatter={(v) => (unit === "%" ? v : formatterRupiah(v))}
+        formatter={(v) =>
+          unit === "%" ? v : unit === "Orang" ? v : formatterRupiah(v)
+        }
       />
     </Space>
   </Card>

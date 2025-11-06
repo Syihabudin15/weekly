@@ -79,6 +79,7 @@ export class PermissionChecker {
 import { useSession } from "next-auth/react";
 import { useMemo } from "react";
 import { IPermission } from "./Interface";
+import moment from "moment";
 
 export function usePermission() {
   const { data: session } = useSession();
@@ -123,16 +124,16 @@ export const calculateWeeklyPayment = (
   annualRate: number,
   tenorWeeks: number
 ): number => {
-  const totalMargin = principal * (annualRate / 100) * (tenorWeeks / 52);
+  const totalMargin = principal * (annualRate / 100) * (tenorWeeks / 12 / 4);
   const totalRepayment = principal + totalMargin;
-  const weeklyPayment = totalRepayment / tenorWeeks; // Total Pengembalian dibagi Tenor (Minggu)
-  return weeklyPayment;
+  const weeklyPayment = totalRepayment / tenorWeeks;
+  const roundedPayment = Math.ceil(weeklyPayment / 1000) * 1000;
+  return roundedPayment;
 };
 
 export const convertWeeklyToMonthlyPayment = (
   weeklyPayment: number
 ): number => {
-  // return weeklyPayment * (52 / 12);
   return weeklyPayment * 4;
 };
 
@@ -144,3 +145,21 @@ export const STATUS_MAP = {
   BATAL: { text: "BATAL", color: "purple" },
   LUNAS: { text: "LUNAS", color: "magenta" },
 };
+export const STATUSKAWIN_MAP = {
+  K: { text: "KAWIN", color: "blue" },
+  BK: { text: "BELUM KAWIN", color: "gold" },
+  J: { text: "JANDA", color: "green" },
+  D: { text: "DUDA", color: "magenta" },
+};
+
+export function getUsiaMasuk(birthdate: string | Date, nowdate: string | Date) {
+  const now = moment(nowdate);
+  const years = now.diff(moment(birthdate), "years");
+  const months = now.diff(moment(birthdate).add(years, "years"), "months");
+  const days = now.diff(
+    moment(birthdate).add(years, "years").add(months, "months"),
+    "days"
+  );
+
+  return `${years} tahun, ${months} bulan, ${days} hari`;
+}

@@ -1,5 +1,5 @@
-import { TagihanPage } from "@/components/Pages";
+import { TagihanV2Page } from "@/components/Pages";
 
 export default function Page() {
-  return <TagihanPage />;
+  return <TagihanV2Page />;
 }

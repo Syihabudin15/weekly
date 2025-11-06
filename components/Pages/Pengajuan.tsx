@@ -41,7 +41,7 @@ const ApplicationListManagement = () => {
   const getData = async () => {
     setPageProps((prev) => ({ ...prev, loading: true }));
     const req = await fetch(
-      `/api/dapem?page=${pageProps.page}&pageSize=${
+      `/api/dapem?status_sub=DRAFT&page=${pageProps.page}&pageSize=${
         pageProps.pageSize
       }${pageProps.filters.map((p) => `&${p.key}=${p.value}`).join("")}`
     );
@@ -78,7 +78,7 @@ const ApplicationListManagement = () => {
     setPageProps((prev) => ({ ...prev, loading: true }));
     await fetch("/api/dapem", {
       method: "PUT",
-      body: JSON.stringify(record),
+      body: JSON.stringify({ ...record, status_sub: "PENDING" }),
     })
       .then((res) => res.json())
       .then(async (res) => {
@@ -183,13 +183,6 @@ const ApplicationListManagement = () => {
       key: "action",
       render: (_, record) => (
         <Space size="small">
-          {/* Edit hanya tersedia jika statusnya DRAFT */}
-          {record.status_sub === "DRAFT" && (
-            <Link href={"/pengajuan/upsert/" + record.id}>
-              <Button icon={<EditOutlined />} size="small"></Button>
-            </Link>
-          )}
-
           {/* Kirim (Submit) hanya tersedia jika statusnya DRAFT */}
           {record.status_sub === "DRAFT" && (
             <Popconfirm
@@ -206,6 +199,12 @@ const ApplicationListManagement = () => {
                 className="bg-green-500 hover:bg-green-600 border-green-500 hover:border-green-600"
               ></Button>
             </Popconfirm>
+          )}
+          {/* Edit hanya tersedia jika statusnya DRAFT */}
+          {record.status_sub === "DRAFT" && (
+            <Link href={"/pengajuan/upsert/" + record.id}>
+              <Button icon={<EditOutlined />} size="small"></Button>
+            </Link>
           )}
 
           {/* Hapus hanya tersedia jika statusnya DRAFT atau TOLAK (jika diizinkan) */}

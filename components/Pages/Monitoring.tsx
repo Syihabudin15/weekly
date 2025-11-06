@@ -9,95 +9,44 @@ import {
   Tooltip,
   Input,
   TableProps,
+  Button,
 } from "antd";
-import {
-  CheckCircleOutlined,
-  ClockCircleOutlined,
-  ExclamationCircleOutlined,
-  CloseCircleOutlined,
-  MinusCircleOutlined,
-  CarryOutOutlined,
-} from "@ant-design/icons";
 import dayjs from "dayjs";
-import { Search } from "lucide-react";
+import { Edit, Info, Search, FolderOpen } from "lucide-react";
+import { calculateWeeklyPayment, formatterRupiah, STATUS_MAP } from "../Util";
+import { IDapem, IPageProps } from "../Interface";
+import Link from "next/link";
 
-const { Title, Text } = Typography;
-
-// Helper function untuk memformat Rupiah
-const formatterRupiah = (value) => {
-  if (!value) return "Rp 0";
-  return "Rp " + new Intl.NumberFormat("id-ID").format(value);
-};
-
-// --- DATA TYPES (Meniru struktur API response) ---
-
-/**
- * Mendefinisikan warna dan ikon untuk setiap status pengajuan.
- * Ini membantu tampilan UI agar konsisten.
- */
-const STATUS_MAP = {
-  DRAFT: { text: "DRAFT", color: "blue", icon: <MinusCircleOutlined /> },
-  PENDING: {
-    text: "PENDING",
-    color: "gold",
-    icon: <ClockCircleOutlined />,
-  },
-  SETUJU: { text: "SETUJUI", color: "green", icon: <CheckCircleOutlined /> },
-  TOLAK: { text: "TOLAK", color: "red", icon: <CloseCircleOutlined /> },
-  BATAL: {
-    text: "BATAL",
-    color: "purple",
-    icon: <ExclamationCircleOutlined />,
-  },
-  LUNAS: { text: "LUNAS", color: "magenta", icon: <CarryOutOutlined /> },
-};
-
-// --- KOMPONEN UTAMA ---
+const { Title } = Typography;
 
 const ApplicationStatusMonitoring = () => {
-  const [data, setData] = useState({ summary: [], recent: [] });
-  const [loading, setLoading] = useState(true);
+  const [pageProps, setPageProps] = useState<IPageProps<IDapem>>({
+    loading: false,
+    page: 1,
+    pageSize: 50,
+    data: [],
+    total: 0,
+    filters: [],
+  });
 
-  // --- API SIMULATION ---
-  const fetchApplicationStatusData = async () => {
-    setLoading(true);
-    try {
-      // Panggil API route yang telah dibuat
-      const response = await fetch("/api/monitoring/status");
-      if (!response.ok) {
-        throw new Error("Gagal mengambil data status pengajuan.");
-      }
-      const result = await response.json();
-
-      // Simulasikan delay jaringan
-      await new Promise((resolve) => setTimeout(resolve, 800));
-
-      // Konversi string tanggal dari mock API ke objek Date (jika diperlukan)
-      const processedRecent = result.recent.map((item) => ({
-        ...item,
-        createdAt: new Date(item.createdAt),
-        key: item.id,
-      }));
-
-      setData({
-        summary: result.summary,
-        recent: processedRecent,
-      });
-    } catch (error) {
-      console.error("Error fetching data:", error);
-      // Tampilkan pesan error di UI jika perlu
-      setData({ summary: [], recent: [] });
-    } finally {
-      setLoading(false);
-    }
+  const getData = async () => {
+    setPageProps((prev) => ({ ...prev, loading: true }));
+    const req = await fetch(
+      `/api/dapem?page=${pageProps.page}&pageSize=${
+        pageProps.pageSize
+      }${pageProps.filters.map((p) => `&${p.key}=${p.value}`).join("")}`
+    );
+    const { data, total } = await req.json();
+    setPageProps((prev) => ({ ...prev, loading: false, data, total }));
   };
-
   useEffect(() => {
-    fetchApplicationStatusData();
-  }, []);
+    const timeout = setTimeout(async () => {
+      await getData();
+    }, 200);
+    return () => clearTimeout(timeout);
+  }, [pageProps.filters, pageProps.page, pageProps.pageSize]);
 
-  // --- DEFINISI KOLOM TABEL ---
-  const columns = useMemo(
+  const columns: TableProps<IDapem>["columns"] = useMemo(
     () => [
       {
         title: "ID Pengajuan",
@@ -108,10 +57,9 @@ const ApplicationStatusMonitoring = () => {
       },
       {
         title: "Nama Debitur",
-        dataIndex: "customer",
-        key: "customer",
-        sorter: (a, b) => a.customer.localeCompare(b.customer),
-        width: 200,
+        dataIndex: ["DataDebitur", "name"],
+        key: "debtorName",
+        width: 180,
       },
       {
         title: "Plafon",
@@ -119,14 +67,32 @@ const ApplicationStatusMonitoring = () => {
         key: "plafon",
         render: (text) => formatterRupiah(text),
         sorter: (a, b) => a.plafon - b.plafon,
-        width: 150,
+        width: 130,
       },
       {
-        title: "Tenor (Bln)",
+        title: "Tenor",
         dataIndex: "tenor",
         key: "tenor",
         sorter: (a, b) => a.tenor - b.tenor,
-        width: 100,
+        width: 80,
+      },
+      {
+        title: "Angsuran",
+        dataIndex: "angsuran",
+        key: "angsuran",
+        render: (text, record) => {
+          const installl = calculateWeeklyPayment(
+            record.plafon,
+            record.margin,
+            record.tenor
+          );
+          return (
+            <Tag color="volcano" className="font-medium">
+              {formatterRupiah(installl)}
+            </Tag>
+          );
+        },
+        width: 120,
       },
       {
         title: "Status",
@@ -149,7 +115,7 @@ const ApplicationStatusMonitoring = () => {
           value: key,
         })),
         onFilter: (value, record) => record.status_sub === value,
-        width: 160,
+        width: 120,
       },
       {
         title: "Tgl. Pengajuan",
@@ -160,19 +126,48 @@ const ApplicationStatusMonitoring = () => {
             {dayjs(date).format("DD/MM/YYYY")}
           </Tooltip>
         ),
-        sorter: (a, b) => a.createdAt.getTime() - b.createdAt.getTime(),
-        width: 150,
+        sorter: (a, b) => a.created_at.getTime() - b.created_at.getTime(),
+        width: 120,
       },
       {
         title: "Aksi",
         key: "action",
         fixed: "right",
         width: 100,
-        render: () => (
+        render: (value, record) => (
           <Space size="middle">
-            {/* <Text className="text-blue-500 cursor-pointer hover:underline">
-              Detail
-            </Text> */}
+            {record.status_sub === "PENDING" && (
+              <Link href={"/pengajuan/" + record.id}>
+                <Tooltip
+                  title={`Klik untuk melihat/proses pengajuan ${record.id}`}
+                >
+                  <Button
+                    icon={<Info size={12} />}
+                    size="small"
+                    type="primary"
+                  ></Button>
+                </Tooltip>
+              </Link>
+            )}
+            <Tooltip title={`Edit pengajuan ${record.id}`}>
+              <Link href={"/pengajuan/upsert/" + record.id}>
+                <Button icon={<Edit size={12} />} size="small"></Button>
+              </Link>
+            </Tooltip>
+            {record.status_sub !== "PENDING" &&
+              record.status_sub !== "DRAFT" && (
+                <Link href={"/pengajuan/" + record.id}>
+                  <Tooltip
+                    title={`Klik untuk melihat detail pengajuan ${record.id}`}
+                  >
+                    <Button
+                      icon={<FolderOpen size={12} />}
+                      size="small"
+                      type="primary"
+                    ></Button>
+                  </Tooltip>
+                </Link>
+              )}
           </Space>
         ),
       },
@@ -180,51 +175,51 @@ const ApplicationStatusMonitoring = () => {
     []
   );
 
-  // Hitung total pengajuan dari summary
-  // const totalApplications = data.summary.reduce(
-  //   (sum, item) => sum + item.count,
-  //   0
-  // );
-
   return (
     <div className="bg-gray-50">
       <Title level={2} className="text-xl font-bold mb-4 text-gray-800">
         Monitoring Pembiayaan
       </Title>
 
-      <Spin spinning={loading} tip="Memuat data status...">
-        {/* --- SUMMARY CARDS --- */}
-
-        {/* --- DETAIL TABLE --- */}
+      <Spin spinning={pageProps.loading} tip="Memuat data status...">
         <Card
           className="shadow-md rounded-lg"
-          bodyStyle={{ padding: 0 }} // Hapus padding default Card body karena tabel sudah punya padding
+          style={{ padding: 0, margin: 0 }}
         >
           <div className="p-2">
             <Input
               placeholder="Cari Nama Jenis..."
               prefix={<Search size={14} />}
               style={{ width: 170 }}
-              // onChange={(e) => {
-              //   const filt = pageProps.filters.filter(
-              //     (f) => f.key !== "search"
-              //   );
-              //   if (e.target.value) {
-              //     filt.push({ key: "search", value: e.target.value });
-              //   }
-              //   setPageProps((prev) => ({ ...prev, filters: filt }));
-              // }}
+              onChange={(e) => {
+                const filt = pageProps.filters.filter(
+                  (f) => f.key !== "search"
+                );
+                if (e.target.value) {
+                  filt.push({ key: "search", value: e.target.value });
+                }
+                setPageProps((prev) => ({ ...prev, filters: filt }));
+              }}
               size="small"
             />
           </div>
           <Table
-            columns={columns as TableProps["columns"]}
-            dataSource={data.recent}
-            pagination={{ pageSize: 10 }}
+            columns={columns}
+            dataSource={pageProps.data}
+            pagination={{
+              pageSize: pageProps.pageSize,
+              total: pageProps.total,
+              pageSizeOptions: [50, 100, 200, 500, 1000],
+              onChange(page, pageSize) {
+                setPageProps((prev) => ({ ...prev, page, pageSize }));
+              },
+            }}
             scroll={{ x: 800, y: 320 }}
             className="w-full"
             bordered
             size="middle"
+            loading={pageProps.loading}
+            rowKey={"id"}
           />
         </Card>
       </Spin>

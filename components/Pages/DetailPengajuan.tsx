@@ -1,11 +1,10 @@
-import React, { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   Card,
   Descriptions,
   Tabs,
   Tag,
   Typography,
-  Spin,
   Row,
   Col,
   List,
@@ -28,15 +27,18 @@ import {
   CloseCircleOutlined,
 } from "@ant-design/icons";
 import dayjs from "dayjs";
+import {
+  calculateWeeklyPayment,
+  formatterRupiah,
+  getUsiaMasuk,
+  STATUS_MAP,
+  STATUSKAWIN_MAP,
+} from "../Util";
+import { IDapem } from "../Interface";
+import { useSession } from "next-auth/react";
 
 const { Title, Text } = Typography;
 const { TextArea } = Input; // Tambahkan import Input.TextArea
-
-// Helper: Format Rupiah
-const formatterRupiah = (value) => {
-  if (value === null || value === undefined) return "Rp 0";
-  return "Rp " + new Intl.NumberFormat("id-ID").format(value);
-};
 
 // Helper: Tentukan ikon berkas
 const getFileIcon = (mimeType) => {
@@ -49,105 +51,6 @@ const getFileIcon = (mimeType) => {
   return <PaperClipOutlined className="text-gray-500" />;
 };
 
-// Helper: Status Pengajuan Map
-const STATUS_MAP = {
-  DRAFT: { text: "DRAFT", color: "blue" },
-  PENDING: { text: "MENUNGGU REVIEW", color: "gold" },
-  SETUJU: { text: "DISETUJUI", color: "green" },
-  TOLAK: { text: "DITOLAK", color: "red" },
-  BATAL: { text: "DIBATALKAN", color: "purple" },
-  LUNAS: { text: "LUNAS", color: "magenta" },
-};
-
-// --- API MOCK FUNCTION (Menggantikan fetch dari /api/monitoring/detail/[id]) ---
-const fetchApplicationDetail = async (id) => {
-  // Simulasikan panggilan API dan delay
-  await new Promise((resolve) => setTimeout(resolve, 800));
-
-  // Data Mock berdasarkan skema model Anda
-  const mockDetailData = {
-    // ID ini harusnya di-pass sebagai parameter
-    id: id,
-    // 1. Detail Pembiayaan (Dapem)
-    dapem: {
-      plafon: 50000000,
-      tenor: 12,
-      margin: 0.12,
-      by_admin: 1500000,
-      by_tabungan: 500000,
-      by_materai: 150000,
-      by_tatalaksana: 0.005, // 0.5%
-      status_sub: "PENDING", // Diubah ke PENDING agar tombol aksi terlihat
-      produkName: "Multiguna", // Dari Produk.name
-      jenisName: "Baru", // Dari Jenis.name
-      description: "Pembiayaan untuk renovasi rumah tinggal di Jakarta.",
-      approvedBy: "User Reviewer A (12345)", // Dari User.name + User.id
-      approvedAt: null, // Null jika PENDING
-      createdAt: dayjs().subtract(7, "days").toDate(),
-    },
-    // 2. Data Debitur (DataDebitur)
-    debtor: {
-      nama: "Andi Pratama",
-      nik: "3201xxxxxxxxxxxx",
-      gaji: 8000000,
-      tanggal_lahir: "1990-05-15",
-      alamat:
-        "Jl. Melati No. 5, Kel. Suka Maju, Kec. Cempaka, Kota Bandung, Jawa Barat, 40111",
-      no_telepon: "081234567890",
-      email: "andi.pratama@mail.com",
-      jenis_kelamin: "L",
-      pekerjaan: "PNS Guru SMA N 3 Bandung",
-      alamat_pekerjaan: "Jl. Sekolah No. 10, Bandung",
-      status_kawin: "K", // Kawin
-    },
-    // 2. Data Keluarga (DataKeluarga)
-    family: [
-      {
-        nama: "Siti Fatimah",
-        hubungan: "Istri",
-        gender: "P",
-        no_telepon: "081211122233",
-      },
-      { nama: "Dodi Pratama", hubungan: "Anak", gender: "L", no_telepon: "-" },
-    ],
-    // 3. Berkas Pendukung (Simulated file list)
-    files: [
-      {
-        name: "KTP Debitur",
-        status: "Lengkap",
-        type: "image/jpeg",
-        url: "/files/ktp.jpg",
-        date: dayjs().subtract(7, "days").toDate(),
-      },
-      {
-        name: "Kartu Keluarga",
-        status: "Lengkap",
-        type: "application/pdf",
-        url: "/files/kk.pdf",
-        date: dayjs().subtract(7, "days").toDate(),
-      },
-      {
-        name: "Slip Gaji 3 Bulan Terakhir",
-        status: "Lengkap",
-        type: "application/zip",
-        url: "/files/slip_gaji.zip",
-        date: dayjs().subtract(6, "days").toDate(),
-      },
-      {
-        name: "Surat Keterangan Kerja",
-        status: "Lengkap",
-        type: "application/pdf",
-        url: "/files/skk.pdf",
-        date: dayjs().subtract(5, "days").toDate(),
-      },
-    ],
-  };
-
-  return mockDetailData;
-};
-
-// --- KOMPONEN BERKAS PENDUKUNG ---
-
 const BerkasPendukungTab = ({ files }) => {
   const handleDownload = (fileName) => {
     notification.success({
@@ -155,41 +58,6 @@ const BerkasPendukungTab = ({ files }) => {
       description: `Mendownload ${fileName} (simulasi).`,
     });
   };
-
-  // const fileColumns = [
-  //   { title: "Nama Berkas", dataIndex: "name", key: "name" },
-  //   {
-  //     title: "Jenis",
-  //     dataIndex: "type",
-  //     key: "type",
-  //     render: (type) => (
-  //       <Text>
-  //         {getFileIcon(type)}
-  //         <span className="ml-2">{type.split("/").pop().toUpperCase()}</span>
-  //       </Text>
-  //     ),
-  //   },
-  //   {
-  //     title: "Tgl. Unggah",
-  //     dataIndex: "date",
-  //     key: "date",
-  //     render: (date) => dayjs(date).format("DD/MM/YYYY HH:mm"),
-  //   },
-  //   {
-  //     title: "Aksi",
-  //     key: "action",
-  //     render: (text, record) => (
-  //       <Button
-  //         type="primary"
-  //         icon={<DownloadOutlined />}
-  //         size="small"
-  //         onClick={() => handleDownload(record.name)}
-  //       >
-  //         Unduh
-  //       </Button>
-  //     ),
-  //   },
-  // ];
 
   return (
     <List
@@ -233,43 +101,46 @@ const BerkasPendukungTab = ({ files }) => {
 
 // --- KOMPONEN UTAMA DETAIL VIEW ---
 
-const ApplicationDetailView = ({ applicationId = "A001" }) => {
-  const [detailData, setDetailData] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-  const [isSubmitting, setIsSubmitting] = useState(false); // Status loading untuk aksi approval
+const ApplicationDetailView = ({ dapem }: { dapem: IDapem }) => {
+  const [loading, setLoading] = useState(false);
+  const { data: session } = useSession();
 
-  // Helper untuk simulasi pembaruan status API
-  // Menerima parameter reason
-  const updateApplicationStatus = async (newStatus, reason = "") => {
-    setIsSubmitting(true);
-    // Simulate API call delay
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-
-    if (Math.random() > 0.1) {
-      // 90% simulasi tingkat keberhasilan
-      setDetailData((prevData) => ({
-        ...prevData,
-        dapem: {
-          ...prevData.dapem,
-          status_sub: newStatus,
-          approvedAt: newStatus === "SETUJU" ? new Date() : null,
-          // Memperbarui description dengan alasan baru jika ada
-          description: reason || prevData.dapem.description,
-          // Di aplikasi nyata, approvedBy akan diatur di sini
-        },
-      }));
-      notification.success({
-        message:
-          newStatus === "SETUJU" ? "Pengajuan Disetujui" : "Pengajuan Ditolak",
-        description: `Status aplikasi #${detailData.id} berhasil diubah menjadi ${STATUS_MAP[newStatus].text}.`,
+  const updateApplicationStatus = async (newStatus, reason) => {
+    setLoading(true);
+    await fetch("/api/dapem", {
+      method: "PUT",
+      body: JSON.stringify({
+        ...dapem,
+        status_sub: newStatus,
+        process_desc: reason,
+        approvedById: session?.user.id,
+      }),
+    })
+      .then((res) => res.json())
+      .then((res) => {
+        if (res.status === 200) {
+          notification.success({
+            message:
+              newStatus === "SETUJU"
+                ? "Pengajuan Disetujui"
+                : "Pengajuan Ditolak",
+            description: `Status aplikasi #${dapem.id} berhasil diubah menjadi ${STATUS_MAP[newStatus].text}.`,
+          });
+        } else {
+          notification.error({
+            message: "Gagal",
+            description: res.msg,
+          });
+        }
+      })
+      .catch((err) => {
+        console.log(err);
+        notification.error({
+          message: "Gagal",
+          description: "Internal Server Error",
+        });
       });
-    } else {
-      notification.error({
-        message: "Gagal",
-        description: "Gagal mengubah status. Silakan coba lagi.",
-      });
-    }
-    setIsSubmitting(false);
+    setLoading(false);
   };
 
   // Handler untuk Setujui
@@ -342,34 +213,7 @@ const ApplicationDetailView = ({ applicationId = "A001" }) => {
     });
   };
 
-  useEffect(() => {
-    const loadData = async () => {
-      setLoading(true);
-      try {
-        const data = await fetchApplicationDetail(applicationId);
-        setDetailData(data);
-      } catch (error) {
-        console.error("Gagal memuat detail aplikasi:", error);
-        notification.error({
-          message: "Gagal",
-          description: "Tidak dapat memuat data detail aplikasi.",
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
-    loadData();
-  }, [applicationId]);
-
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center h-96">
-        <Spin size="large" tip="Memuat detail aplikasi..." />
-      </div>
-    );
-  }
-
-  if (!detailData) {
+  if (!dapem) {
     return (
       <div className="p-6 text-center text-red-500">
         Data aplikasi tidak ditemukan.
@@ -377,7 +221,6 @@ const ApplicationDetailView = ({ applicationId = "A001" }) => {
     );
   }
 
-  const { dapem, debtor, family, files } = detailData;
   // Tentukan apakah tombol aksi harus ditampilkan
   const isPending = dapem.status_sub === "PENDING";
 
@@ -386,23 +229,50 @@ const ApplicationDetailView = ({ applicationId = "A001" }) => {
   const DetailPembiayaanContent = (
     <div className="space-y-6">
       <Title level={4} className="mt-0">
-        Detail Pembiayaan (Dapem: {detailData.id})
+        Detail Pembiayaan {dapem.id}
       </Title>
 
       {/* 1. Data Utama Pembiayaan */}
       <Descriptions
         bordered
-        column={{ xs: 1, sm: 2, md: 3 }}
+        column={1}
         size="middle"
+        labelStyle={{ width: "50%" }}
         title={<span className="font-semibold text-base">Informasi Utama</span>}
       >
         <Descriptions.Item label="Plafon Pengajuan">
-          <Text className="font-bold text-blue-600">
+          <Text className="font-bold text-blue-600" style={{ color: "green" }}>
             {formatterRupiah(dapem.plafon)}
           </Text>
         </Descriptions.Item>
-        <Descriptions.Item label="Tenor (Bulan)">
-          {dapem.tenor} Bulan
+        <Descriptions.Item label="Potongan Biaya">
+          <Text className="font-bold text-red-500" style={{ color: "red" }}>
+            {formatterRupiah(
+              dapem.plafon * (dapem.by_admin / 100) +
+                dapem.plafon * (dapem.by_tatalaksana / 100) +
+                dapem.by_tabungan +
+                dapem.by_materai
+            )}
+          </Text>
+        </Descriptions.Item>
+        <Descriptions.Item label="Terima Bersih">
+          <Text className="font-bold text-blue-500" style={{ color: "green" }}>
+            {formatterRupiah(
+              dapem.plafon -
+                (dapem.plafon * (dapem.by_admin / 100) +
+                  dapem.plafon * (dapem.by_tatalaksana / 100) +
+                  dapem.by_tabungan +
+                  dapem.by_materai)
+            )}
+          </Text>
+        </Descriptions.Item>
+        <Descriptions.Item label="Tenor (Minggu)">
+          {dapem.tenor} Minggu
+        </Descriptions.Item>
+        <Descriptions.Item label="Angsuran (Minggu)">
+          {formatterRupiah(
+            calculateWeeklyPayment(dapem.plafon, dapem.margin, dapem.tenor)
+          )}
         </Descriptions.Item>
         <Descriptions.Item label="Status Pengajuan">
           <Tag color={STATUS_MAP[dapem.status_sub]?.color || "default"}>
@@ -410,26 +280,31 @@ const ApplicationDetailView = ({ applicationId = "A001" }) => {
           </Tag>
         </Descriptions.Item>
       </Descriptions>
-
+      <div className="my-2"></div>
       {/* 2. Data Produk, Margin, dan Biaya */}
       <Descriptions
         bordered
-        column={{ xs: 1, sm: 2, md: 3 }}
+        column={1}
         size="middle"
+        labelStyle={{ width: "50%" }}
         title={
           <span className="font-semibold text-base">
             Produk, Margin & Biaya
           </span>
         }
       >
-        <Descriptions.Item label="Produk">{dapem.produkName}</Descriptions.Item>
-        <Descriptions.Item label="Jenis">{dapem.jenisName}</Descriptions.Item>
-        <Descriptions.Item label="Margin">
-          {dapem.margin * 100}%
+        <Descriptions.Item label="Jenis">{dapem.Jenis.name}</Descriptions.Item>
+        <Descriptions.Item label="Produk">
+          {dapem.Produk.name}
         </Descriptions.Item>
 
+        <Descriptions.Item label="Margin">{dapem.margin}%</Descriptions.Item>
+
         <Descriptions.Item label="Biaya Admin">
-          {formatterRupiah(dapem.by_admin)}
+          {formatterRupiah(dapem.plafon * (dapem.by_admin / 100))}
+        </Descriptions.Item>
+        <Descriptions.Item label="Biaya Tatalaksana">
+          {formatterRupiah(dapem.plafon * (dapem.by_tatalaksana / 100))}
         </Descriptions.Item>
         <Descriptions.Item label="Biaya Tabungan">
           {formatterRupiah(dapem.by_tabungan)}
@@ -440,29 +315,33 @@ const ApplicationDetailView = ({ applicationId = "A001" }) => {
 
         {/* Asumsi Biaya Tatalaksana tidak ditampilkan karena 0.5% (dihitung) */}
       </Descriptions>
-
+      <div className="my-2"></div>
       {/* 3. Data Approval & Keterangan */}
       <Descriptions
         bordered
-        column={{ xs: 1, sm: 2, md: 3 }}
+        column={1}
         size="middle"
+        labelStyle={{ width: "50%" }}
         title={
           <span className="font-semibold text-base">Waktu & Approval</span>
         }
       >
         <Descriptions.Item label="Tgl. Pengajuan">
-          {dayjs(dapem.createdAt).format("DD MMMM YYYY HH:mm")}
-        </Descriptions.Item>
-        <Descriptions.Item label="Disetujui Oleh">
-          {dapem.approvedBy}
-        </Descriptions.Item>
-        <Descriptions.Item label="Tgl. Disetujui">
-          {dapem.approvedAt
-            ? dayjs(dapem.approvedAt).format("DD MMMM YYYY HH:mm")
-            : "-"}
+          {dayjs(dapem.created_at).format("DD MMMM YYYY HH:mm")}
         </Descriptions.Item>
 
-        <Descriptions.Item label="Keterangan" span={3}>
+        <Descriptions.Item label="Keterangan Pengajuan" span={3}>
+          <Text>{dapem.description || "-"}</Text>
+        </Descriptions.Item>
+        <Descriptions.Item label="Disetujui Oleh">
+          {dapem.ApprovedBy ? dapem.ApprovedBy.name : "-"}
+        </Descriptions.Item>
+        <Descriptions.Item label="Tgl. Disetujui">
+          {dapem.process_date
+            ? dayjs(dapem.process_date).format("DD MMMM YYYY HH:mm")
+            : "-"}
+        </Descriptions.Item>
+        <Descriptions.Item label="Keterangan Proses" span={3}>
           <Text
             className={
               dapem.status_sub === "TOLAK"
@@ -470,7 +349,7 @@ const ApplicationDetailView = ({ applicationId = "A001" }) => {
                 : "text-gray-800"
             }
           >
-            {dapem.description || "Tidak ada keterangan tambahan."}
+            {dapem.process_desc || "-"}
           </Text>
         </Descriptions.Item>
       </Descriptions>
@@ -488,36 +367,47 @@ const ApplicationDetailView = ({ applicationId = "A001" }) => {
         {/* Blok 1: Data Pribadi */}
         <Descriptions
           bordered
-          column={{ xs: 1, sm: 2, md: 3 }}
+          column={1}
+          labelStyle={{ width: "50%" }}
           size="middle"
           title={<span className="font-semibold text-base">Data Pribadi</span>}
         >
-          <Descriptions.Item label="Nama">{debtor.nama}</Descriptions.Item>
-          <Descriptions.Item label="NIK">{debtor.nik}</Descriptions.Item>
+          <Descriptions.Item label="Nama">
+            {dapem.DataDebitur.name}
+          </Descriptions.Item>
+          <Descriptions.Item label="NIK">
+            {dapem.DataDebitur.nik}
+          </Descriptions.Item>
           <Descriptions.Item label="Tgl Lahir">
-            {dayjs(debtor.tanggal_lahir).format("DD MMMM YYYY")}
+            {dayjs(dapem.DataDebitur.tanggal_lahir).format("DD MMMM YYYY")}
+          </Descriptions.Item>
+          <Descriptions.Item label="Usia saat pengajuan">
+            {getUsiaMasuk(dapem.DataDebitur.tanggal_lahir, dapem.created_at)}
           </Descriptions.Item>
           <Descriptions.Item label="Jenis Kelamin">
-            {debtor.jenis_kelamin === "L" ? "Laki-laki" : "Perempuan"}
+            {dapem.DataDebitur.jenis_kelamin === "L"
+              ? "Laki-laki"
+              : "Perempuan"}
           </Descriptions.Item>
           <Descriptions.Item label="Status Kawin">
-            {debtor.status_kawin}
+            {STATUSKAWIN_MAP[dapem.DataDebitur.status_kawin].text}
           </Descriptions.Item>
           <Descriptions.Item label="No. Telepon">
-            {debtor.no_telepon}
+            {dapem.DataDebitur.no_telepon}
           </Descriptions.Item>
           <Descriptions.Item label="Email">
-            {debtor.email || "-"}
+            {dapem.DataDebitur.email || "-"}
           </Descriptions.Item>
           <Descriptions.Item label="Alamat Tinggal" span={3}>
-            {debtor.alamat}
+            {dapem.DataDebitur.alamat}
           </Descriptions.Item>
         </Descriptions>
 
         {/* Blok 2: Data Pekerjaan & Finansial */}
         <Descriptions
           bordered
-          column={{ xs: 1, sm: 2, md: 3 }}
+          column={1}
+          labelStyle={{ width: "50%" }}
           size="middle"
           title={
             <span className="font-semibold text-base">
@@ -526,15 +416,15 @@ const ApplicationDetailView = ({ applicationId = "A001" }) => {
           }
         >
           <Descriptions.Item label="Pekerjaan">
-            {debtor.pekerjaan}
+            {dapem.DataDebitur.pekerjaan}
           </Descriptions.Item>
           <Descriptions.Item label="Gaji Pokok">
             <Text className="font-medium text-green-600">
-              {formatterRupiah(debtor.gaji)}
+              {formatterRupiah(dapem.DataDebitur.salary)}
             </Text>
           </Descriptions.Item>
           <Descriptions.Item label="Alamat Pekerjaan" span={3}>
-            {debtor.alamat_pekerjaan}
+            {dapem.DataDebitur.alamat_pekerjaan}
           </Descriptions.Item>
         </Descriptions>
       </Col>
@@ -547,16 +437,10 @@ const ApplicationDetailView = ({ applicationId = "A001" }) => {
           </Title>
         </Divider>
         <Table
-          dataSource={family}
+          dataSource={dapem.DataDebitur.DataKeluarga}
           columns={[
-            { title: "Nama", dataIndex: "nama", key: "nama" },
+            { title: "Nama", dataIndex: "name", key: "name" },
             { title: "Hubungan", dataIndex: "hubungan", key: "hubungan" },
-            {
-              title: "Jenis Kelamin",
-              dataIndex: "gender",
-              key: "gender",
-              render: (g) => (g === "L" ? "Laki-laki" : "Perempuan"),
-            },
             {
               title: "No. Telepon",
               dataIndex: "no_telepon",
@@ -566,6 +450,7 @@ const ApplicationDetailView = ({ applicationId = "A001" }) => {
           pagination={false}
           bordered
           size="middle"
+          rowKey={"id"}
         />
       </Col>
     </Row>
@@ -602,18 +487,18 @@ const ApplicationDetailView = ({ applicationId = "A001" }) => {
       ),
       children: (
         <div className="p-4 bg-white rounded-lg">
-          <BerkasPendukungTab files={files} />
+          {/* <BerkasPendukungTab files={files} /> */}
         </div>
       ),
     },
   ];
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
+    <div className="bg-gray-50">
       <Row justify="space-between" align="middle" className="mb-4">
         <Col>
           <Title level={2} className="text-2xl font-bold m-0 text-gray-800">
-            Detail Pengajuan #{detailData.id}
+            Detail Pengajuan #{dapem.id}
           </Title>
           <Text className="text-lg text-gray-500">
             Status saat ini:{" "}
@@ -622,7 +507,6 @@ const ApplicationDetailView = ({ applicationId = "A001" }) => {
             </Tag>
           </Text>
         </Col>
-
         {/* --- Tombol Aksi untuk Persetujuan/Penolakan --- */}
         {isPending && (
           <Col>
@@ -631,7 +515,7 @@ const ApplicationDetailView = ({ applicationId = "A001" }) => {
               danger
               icon={<CloseCircleOutlined />}
               onClick={handleRejectClick}
-              loading={isSubmitting}
+              loading={loading}
               className="mr-3"
             >
               Tolak Pengajuan
@@ -640,7 +524,7 @@ const ApplicationDetailView = ({ applicationId = "A001" }) => {
               type="primary"
               icon={<CheckCircleOutlined />}
               onClick={handleApproveClick}
-              loading={isSubmitting}
+              loading={loading}
               className="bg-green-500 hover:bg-green-600 border-green-500 hover:border-green-600"
             >
               Setujui Pengajuan
@@ -654,7 +538,7 @@ const ApplicationDetailView = ({ applicationId = "A001" }) => {
         className="shadow-xl rounded-lg border-t-4 border-blue-500"
         bodyStyle={{ padding: 0 }}
       >
-        <Tabs defaultActiveKey="1" items={items} size="large" className="p-4" />
+        <Tabs defaultActiveKey="1" items={items} size="large" className="p-2" />
       </Card>
     </div>
   );

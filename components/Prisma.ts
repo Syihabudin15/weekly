@@ -52,7 +52,9 @@ export function generateJadwalAngsuran(dapem: IDapem) {
     const id = generateNoTrx("INV", dapem.id, i);
     jadwals.push({
       id,
-      jadwal_bayar: moment(dapem.process_date).add(i, "week").toDate(),
+      jadwal_bayar: moment(dapem.process_date || new Date())
+        .add(i, "week")
+        .toDate(),
       tanggal_bayar: null,
       angsuran_ke: i,
       pokok: pokok,

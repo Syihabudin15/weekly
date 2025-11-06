@@ -543,7 +543,7 @@ export default function UpsertPengajuan({
               label="Pekerjaan"
               rules={[{ required: true, message: "Wajib mengisi Pekerjaan" }]}
             >
-              <Input placeholder="088xxxxxxxxx" />
+              <Input placeholder="Pedagang" />
             </Form.Item>
           </Col>
           <Col xs={12} lg={6}>

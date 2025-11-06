@@ -4,14 +4,20 @@ import prisma, {
   generateUniqueLoanId,
 } from "@/components/Prisma";
 import { GetDefaultPageprop, ResponseServer } from "@/components/ServerUtil";
+import { EStatusPengajuan } from "@prisma/client";
 import { NextRequest } from "next/server";
 
 export const GET = async (req: NextRequest) => {
   const { skip, pageSize, search } = GetDefaultPageprop(req);
+  const status_sub: EStatusPengajuan | null = <any>(
+    req.nextUrl.searchParams.get("status_sub")
+  );
+
   const data = await prisma.dapem.findMany({
     where: {
       status: true,
       ...(search && { DataDebitur: { name: { contains: search } } }),
+      ...(status_sub && { status_sub: status_sub }),
     },
     skip: skip,
     take: pageSize,
@@ -28,6 +34,7 @@ export const GET = async (req: NextRequest) => {
     where: {
       status: true,
       ...(search && { DataDebitur: { name: { contains: search } } }),
+      ...(status_sub && { status_sub: status_sub }),
     },
     skip: skip,
     take: pageSize,
@@ -91,8 +98,11 @@ export const PUT = async (req: NextRequest) => {
       await prisma.$transaction(async (tx) => {
         await tx.dapem.update({
           where: { id },
-          data: { ...saved, updated_at: new Date() },
+          data: { ...saved, updated_at: new Date(), process_date: new Date() },
         });
+        if (!data.process_date) {
+          data.process_date = new Date();
+        }
         const jadwalAngsuran = generateJadwalAngsuran(data);
         await tx.jadwalAngsuran.createMany({ data: jadwalAngsuran });
       });

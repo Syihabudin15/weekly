@@ -21,6 +21,7 @@ import {
   Layers2,
   BookMarkedIcon,
   FileBadge2,
+  Key,
 } from "lucide-react";
 import "@ant-design/v5-patch-for-react-19";
 import { IPermission } from "./Interface";
@@ -59,23 +60,16 @@ export const menuItems: MenuItem[] = [
     requiredPermission: "/pengajuan",
   },
   {
+    path: "/pengajuan/lunas",
+    name: "Lunas",
+    icon: Users,
+    requiredPermission: "/pengajuan/lunas",
+  },
+  {
     path: "/debitur",
     name: "Data Debitur",
     icon: Users,
     requiredPermission: "/debitur",
-  },
-  {
-    path: "/pengajuan",
-    name: "Pengajuan Kredit",
-    icon: FileText,
-    requiredPermission: "/dapem",
-    children: [
-      { path: "/pengajuan/draft", name: "Draft", icon: null },
-      { path: "/pengajuan/pending", name: "Pending", icon: null },
-      { path: "/pengajuan/disetujui", name: "Disetujui", icon: null },
-      { path: "/pengajuan/ditolak", name: "Ditolak", icon: null },
-      { path: "/pengajuan/lunas", name: "Lunas", icon: null },
-    ],
   },
   {
     path: "/tagihan",
@@ -104,7 +98,7 @@ export const menuItems: MenuItem[] = [
   {
     path: "/roles",
     name: "Role & Permission",
-    icon: Settings,
+    icon: Key,
     requiredPermission: "/roles",
   },
   {
@@ -165,13 +159,13 @@ export default function MainLayout({
       <aside
         className={`
           fixed top-0 left-0 h-full bg-blue-900 text-white transition-all duration-300 z-50
-          ${sidebarOpen ? "w-64 lg:w-64" : "w-0 lg:w-16"}
-          overflow-hidden
+          ${sidebarOpen ? "w-64 lg:w-64" : "w-0 lg:w-18"}
+          overflow-x-auto
         `}
       >
         <div
-          className={`flex items-center p-4 border-b border-blue-800 transition-all duration-300 ${
-            sidebarOpen ? "justify-between" : "justify-center"
+          className={`flex items-center  border-b border-blue-800 transition-all duration-300 ${
+            sidebarOpen ? "justify-between p-4" : "justify-center p-1"
           }`}
         >
           <h1
@@ -191,7 +185,7 @@ export default function MainLayout({
         </div>
 
         {/* Menu Navigation */}
-        <nav className="p-2 space-y-1 overflow-auto">
+        <nav className="p-2 space-y-1">
           {filteredMenuItems.map((item) => (
             <div key={item.path}>
               {item.children ? (
@@ -269,7 +263,7 @@ export default function MainLayout({
         </nav>
 
         {/* Footer/User Info & Logout */}
-        <div
+        {/* <div
           className={`
             absolute bottom-0 border-t border-blue-800 p-3 
             ${
@@ -305,7 +299,7 @@ export default function MainLayout({
               <LogOut size={20} />
             </button>
           )}
-        </div>
+        </div> */}
       </aside>
 
       {/* Main Content */}
@@ -326,15 +320,18 @@ export default function MainLayout({
             >
               <Menu size={24} />
             </button>
-            <div className="flex items-center gap-4">
-              <span className="text-sm text-gray-600">
-                {new Date().toLocaleDateString("id-ID", {
-                  weekday: "long",
-                  year: "numeric",
-                  month: "long",
-                  day: "numeric",
-                })}
-              </span>
+            <div className="flex items-center gap-4 text-sm text-gray-600">
+              <p className="text-sm font-semibold">
+                {session?.user?.name}{" "}
+                <span className="opacity-50">({session?.user?.position})</span>
+              </p>
+              <button
+                onClick={handleLogout}
+                className="rounded p-1 bg-red-400 hover:bg-red-600 transition-colors text-white cursor-pointer"
+                title="Logout"
+              >
+                <LogOut size={18} />
+              </button>
             </div>
           </div>
         </header>
