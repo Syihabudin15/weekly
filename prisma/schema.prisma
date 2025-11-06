@@ -131,10 +131,10 @@ model Dapem {
 
 model DataDebitur {
   id               String         @id @default(uuid())
-  nama             String
+  name             String
   nik              String         @unique
   no_kk            String?
-  gaji             Int
+  salary           Int
   tanggal_lahir    DateTime
   alamat           String
   kelurahan        String
@@ -157,7 +157,7 @@ model DataDebitur {
 
 model DataKeluarga {
   id            String      @id @default(uuid())
-  nama          String
+  name          String
   hubungan      String
   no_telepon    String
   DataDebitur   DataDebitur @relation(fields: [dataDebiturId], references: [id])
@@ -166,11 +166,10 @@ model DataKeluarga {
 
 model JadwalAngsuran {
   id               String     @id @default(uuid())
-  no_trx           String
   jadwal_bayar     DateTime
+  tanggal_bayar    DateTime?
   pokok            Int
   margin           Int
-  tanggal_bayar    DateTime
   angsuran_ke      Int
   keterangan       String?
   file             String?

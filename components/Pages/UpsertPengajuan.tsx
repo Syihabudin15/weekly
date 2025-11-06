@@ -41,6 +41,7 @@ import { useEffect, useState } from "react";
 import { Jenis, Produk } from "@prisma/client";
 import { CalculationInputs, CalculationResults, IDapem } from "../Interface";
 import { useSession } from "next-auth/react";
+import moment from "moment";
 const { Title, Text } = Typography;
 const { Option } = Select;
 const { TextArea } = Input;
@@ -76,15 +77,19 @@ export default function UpsertPengajuan({
   const [results, setResults] = useState<CalculationResults | null>(null);
   // const [schedule, setSchedule] = useState<AmortizationSchedule[]>([]);
   const [loading, setLoading] = useState(false);
-  const [selectedJenis, setSelectedJenis] = useState<Jenis | null>(null);
-  const [selectedProduct, setSelectedProduct] = useState<Produk | null>(null);
+  const [selectedJenis, setSelectedJenis] = useState<Jenis | null>(
+    data ? data.Jenis : null
+  );
+  const [selectedProduct, setSelectedProduct] = useState<Produk | null>(
+    data ? data.Produk : null
+  );
   const [wilayah, setWilayah] = useState<IOptionWilayah>({
     province: [],
-    selectedProvince: undefined,
+    selectedProvince: data ? data.DataDebitur.provinsi : undefined,
     regency: [],
-    selectedRegency: undefined,
+    selectedRegency: data ? data.DataDebitur.kota : undefined,
     district: [],
-    selectedDistrict: undefined,
+    selectedDistrict: data ? data.DataDebitur.kecamatan : undefined,
     village: [],
   });
   const handleProductChange = (productId: string) => {
@@ -230,6 +235,7 @@ export default function UpsertPengajuan({
     wilayah.selectedDistrict,
     wilayah.selectedRegency,
   ]);
+
   useEffect(() => {
     (async () => {
       const reqProduct = await fetch("/api/produk?page=1&pageSize=100");
@@ -249,10 +255,15 @@ export default function UpsertPengajuan({
     e.createdById = session ? session.user.id : "";
     if (data) {
       e.createdById = data.createdById;
-      e.approvedById = data.approvedById;
+      e.id = data.id;
+      e.DataDebitur.id = data.dataDebiturId;
     }
+    e.DataDebitur.salary = e.salary;
+    e.DataDebitur.tanggal_lahir = new Date(e.DataDebitur.tanggal_lahir);
+    e.dsr = selectedProduct?.dsr || 50;
+
     await fetch(`/api/dapem`, {
-      method: "POST",
+      method: data ? "PUT" : "POST",
       body: JSON.stringify({
         ...e,
         Produk: selectedProduct,
@@ -283,7 +294,15 @@ export default function UpsertPengajuan({
         layout="vertical"
         initialValues={
           data
-            ? { ...data }
+            ? {
+                ...data,
+                DataDebitur: {
+                  ...data.DataDebitur,
+                  tanggal_lahir: moment(data.DataDebitur.tanggal_lahir).format(
+                    "YYYY-MM-DD"
+                  ),
+                },
+              }
             : {
                 tenor: 0,
                 status_sub: "DRAFT",
@@ -517,6 +536,37 @@ export default function UpsertPengajuan({
             </Form.Item>
           </Col>
         </Row>
+        <Row gutter={[24, 24]}>
+          <Col xs={12} lg={6}>
+            <Form.Item
+              name={["DataDebitur", "pekerjaan"]}
+              label="Pekerjaan"
+              rules={[{ required: true, message: "Wajib mengisi Pekerjaan" }]}
+            >
+              <Input placeholder="088xxxxxxxxx" />
+            </Form.Item>
+          </Col>
+          <Col xs={12} lg={6}>
+            <Form.Item
+              name={["DataDebitur", "alamat_pekerjaan"]}
+              label="Alamat Pekerjaan"
+              rules={[
+                { required: true, message: "Wajib mengisi Alamat Pekerjaan" },
+              ]}
+            >
+              <TextArea placeholder="Jl. xx No x"></TextArea>
+            </Form.Item>
+          </Col>
+          <Col xs={12} lg={6}>
+            <Form.Item
+              name={["DataDebitur", "no_telepon"]}
+              label="No Telepon"
+              rules={[{ required: true, message: "Wajib mengisi No Telepon" }]}
+            >
+              <Input placeholder="088xxxxxxxxx" />
+            </Form.Item>
+          </Col>
+        </Row>
 
         <Divider />
 
@@ -527,7 +577,7 @@ export default function UpsertPengajuan({
             Data Keluarga (Kontak Darurat)
           </Title>
         </Space>
-        <Form.List name={["DataDebitur", "DataKaluarga"]}>
+        <Form.List name={["DataDebitur", "DataKeluarga"]}>
           {(fields, { add, remove }) => (
             <>
               {fields.map(({ key, name, fieldKey, ...restField }) => (
@@ -556,15 +606,15 @@ export default function UpsertPengajuan({
                   <Col xs={12} lg={6}>
                     <Form.Item
                       {...restField}
-                      name={[name, "hubunagan"]}
-                      fieldKey={[fieldKey || "", "hubunagan"]}
+                      name={[name, "hubungan"]}
+                      fieldKey={[fieldKey || "", "hubungan"]}
                       rules={[
                         { required: true, message: "Hubungan Wajib diisi" },
                       ]}
                       // style={{ width: 120 }}
                     >
                       <Select placeholder="Hubungan">
-                        <Option value="Istri">Istri/Suami</Option>
+                        <Option value="Suami/Istri">Istri/Suami</Option>
                         <Option value="Anak Kandung">Anak Kandung</Option>
                         <Option value="Orang Tua">Orang Tua</Option>
                         <Option value="Lainnya">Lainnya</Option>

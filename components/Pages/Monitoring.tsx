@@ -42,10 +42,10 @@ const STATUS_MAP = {
     color: "gold",
     icon: <ClockCircleOutlined />,
   },
-  SETUJU: { text: "DISETUJUI", color: "green", icon: <CheckCircleOutlined /> },
-  TOLAK: { text: "DITOLAK", color: "red", icon: <CloseCircleOutlined /> },
+  SETUJU: { text: "SETUJUI", color: "green", icon: <CheckCircleOutlined /> },
+  TOLAK: { text: "TOLAK", color: "red", icon: <CloseCircleOutlined /> },
   BATAL: {
-    text: "DIBATALKAN",
+    text: "BATAL",
     color: "purple",
     icon: <ExclamationCircleOutlined />,
   },
@@ -170,9 +170,9 @@ const ApplicationStatusMonitoring = () => {
         width: 100,
         render: () => (
           <Space size="middle">
-            <Text className="text-blue-500 cursor-pointer hover:underline">
+            {/* <Text className="text-blue-500 cursor-pointer hover:underline">
               Detail
-            </Text>
+            </Text> */}
           </Space>
         ),
       },

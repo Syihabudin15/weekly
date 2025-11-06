@@ -128,9 +128,19 @@ export const calculateWeeklyPayment = (
   const weeklyPayment = totalRepayment / tenorWeeks; // Total Pengembalian dibagi Tenor (Minggu)
   return weeklyPayment;
 };
+
 export const convertWeeklyToMonthlyPayment = (
   weeklyPayment: number
 ): number => {
   // return weeklyPayment * (52 / 12);
   return weeklyPayment * 4;
+};
+
+export const STATUS_MAP = {
+  DRAFT: { text: "DRAFT", color: "blue" },
+  PENDING: { text: "PENDING", color: "gold" },
+  SETUJU: { text: "DISETUJUI", color: "green" },
+  TOLAK: { text: "DITOLAK", color: "red" },
+  BATAL: { text: "BATAL", color: "purple" },
+  LUNAS: { text: "LUNAS", color: "magenta" },
 };
