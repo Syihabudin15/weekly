@@ -54,17 +54,15 @@ export const ProdukPage = dynamic(() => import("@/components/Pages/Produk"), {
   loading: () => <LoaderCircle size={15} />,
 });
 
+export const DebiturPage = dynamic(() => import("@/components/Pages/Debitur"), {
+  ssr: false,
+  loading: () => <LoaderCircle size={15} />,
+});
 export const TagihanPage = dynamic(() => import("@/components/Pages/Tagihan"), {
   ssr: false,
   loading: () => <LoaderCircle size={15} />,
 });
-export const TagihanV2Page = dynamic(
-  () => import("@/components/Pages/TagihanV2"),
-  {
-    ssr: false,
-    loading: () => <LoaderCircle size={15} />,
-  }
-);
+
 export const RolePage = dynamic(() => import("@/components/Pages/Role"), {
   ssr: false,
   loading: () => <LoaderCircle size={15} />,

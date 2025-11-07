@@ -22,6 +22,7 @@ import {
   BookMarkedIcon,
   FileBadge2,
   Key,
+  Receipt,
 } from "lucide-react";
 import "@ant-design/v5-patch-for-react-19";
 import { IPermission } from "./Interface";
@@ -60,10 +61,10 @@ export const menuItems: MenuItem[] = [
     requiredPermission: "/pengajuan",
   },
   {
-    path: "/pengajuan/lunas",
-    name: "Lunas",
-    icon: Users,
-    requiredPermission: "/pengajuan/lunas",
+    path: "/lunas",
+    name: "Debitur Lunas",
+    icon: Receipt,
+    requiredPermission: "/lunas",
   },
   {
     path: "/debitur",

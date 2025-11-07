@@ -365,10 +365,16 @@ export default function FinancingMonitoringDashboard() {
                 />
                 <YAxis yAxisId="right" orientation="right" stroke="#82ca9d" />
                 <Tooltip
-                  formatter={(value, name) => {
-                    if (name === "outstanding")
-                      return [formatterRupiah(value as string), "Outstanding"];
-                    return [value, "Jumlah Debitur"];
+                  formatter={(value, dataKey) => {
+                    if (dataKey === "outstanding") {
+                      return [
+                        formatterRupiah(value as number),
+                        "Outstanding (Rp)",
+                      ];
+                    } else if (dataKey === "debtors") {
+                      return [value, "Jumlah Debitur (Orang)"];
+                    }
+                    return [value, dataKey];
                   }}
                 />
                 <Legend />

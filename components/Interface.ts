@@ -62,3 +62,12 @@ export interface IDapem extends Dapem {
   ApprovedBy: User;
   JadwalAngsuran: JadwalAngsuran[];
 }
+
+export interface ITagihan extends JadwalAngsuran {
+  Dapem: IDapem;
+  statusPembayaran: string;
+}
+export interface IDebitur extends DataDebitur {
+  Dapem: IDapem[];
+  DataKeluarga: DataKeluarga[];
+}

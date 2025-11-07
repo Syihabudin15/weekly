@@ -14,87 +14,35 @@ import {
   Row,
   Col,
   Typography,
-  Popconfirm,
   DatePicker,
   Tooltip,
   Select,
+  Upload,
 } from "antd";
 import {
   Receipt,
   Edit,
   Search,
-  Trash2,
   Calendar,
   Info,
   User,
   Clock,
   CheckCircle,
+  UploadCloud,
+  Eye,
 } from "lucide-react";
 import type { TableProps } from "antd";
 import dayjs from "dayjs";
 import { formatterRupiah, usePermission } from "../Util";
-
-// =========================================================================
-// INTERFACE & UTILITY (Disesuaikan dengan EKunjungan baru)
-// =========================================================================
-
-// EKunjungan dari model Prisma Anda
-type EStatusKunjungan = "BELUM" | "SUDAH";
-
-interface Angsuran {
-  id: string; // JadwalAngsuran ID
-  dapemId: string;
-  no_trx: string;
-  customerName: string; // Nama Debitur (dari relasi DataDebitur)
-  pokok: number;
-  margin: number;
-  totalAngsuran: number; // Pokok + Margin
-  jadwal_bayar: string; // Tanggal Jatuh Tempo
-  tanggal_bayar: string | null; // Tanggal Bayar (null jika belum bayar)
-  angsuran_ke: number;
-  keterangan: string | null;
-  file: string | null; // File bukti bayar/kunjungan (baru ditambahkan)
-  status_kunjungan: EStatusKunjungan;
-  statusPembayaran: "LUNAS" | "BELUM LUNAS" | "TERLAMBAT"; // Status yang diturunkan
-}
-
-interface IPageProps<T> {
-  loading: boolean;
-  page: number;
-  pageSize: number;
-  data: T[];
-  filters: { key: string; value: string }[];
-  total: number;
-}
-// Placeholder for usePermission, adjust import path as needed
+import { IPageProps, ITagihan } from "../Interface";
+import { EKunjungan } from "@prisma/client";
 
 const { Text } = Typography;
 const { Option } = Select;
-
-// Fungsi untuk menentukan status pembayaran
-const determineStatus = (
-  jadwalBayar: string,
-  tanggalBayar: string | null
-): Angsuran["statusPembayaran"] => {
-  if (tanggalBayar) return "LUNAS";
-
-  const dueDate = dayjs(jadwalBayar).startOf("day");
-  const today = dayjs().startOf("day");
-
-  if (dueDate.isBefore(today, "day")) {
-    return "TERLAMBAT";
-  }
-  return "BELUM LUNAS";
-};
-
-// =========================================================================
-// FORM MODAL (Update Pembayaran Angsuran)
-// =========================================================================
-
 interface AngsuranFormProps {
   isModalVisible: boolean;
   setIsModalVisible: (visible: boolean) => void;
-  editingAngsuran: Angsuran | null;
+  editingAngsuran: ITagihan | null;
   getData: () => void;
 }
 
@@ -104,14 +52,16 @@ const AngsuranUpdateForm: React.FC<AngsuranFormProps> = ({
   editingAngsuran,
   getData,
 }) => {
+  const [data, setData] = useState<ITagihan | null>(editingAngsuran);
   const [loading, setLoading] = useState(false);
   const [form] = Form.useForm();
+  const [fileList, setFileList] = useState<any[]>([]);
 
   const angsuranInfo = editingAngsuran
-    ? `Angsuran ke-${editingAngsuran.angsuran_ke} (${editingAngsuran.no_trx})`
+    ? `Angsuran (${editingAngsuran.id})`
     : "Detail Angsuran";
 
-  const title = `Update Angsuran: ${angsuranInfo}`;
+  const title = `Angsuran: ${angsuranInfo}`;
 
   React.useEffect(() => {
     if (editingAngsuran) {
@@ -131,24 +81,28 @@ const AngsuranUpdateForm: React.FC<AngsuranFormProps> = ({
     if (!editingAngsuran) return;
     setLoading(true);
 
-    const payload = {
-      ...values,
-      id: editingAngsuran.id,
-      // Konversi dayjs object ke string YYYY-MM-DD atau null
-      tanggal_bayar: values.tanggal_bayar
+    const formData = new FormData();
+    formData.append("id", editingAngsuran.id);
+    formData.append("keterangan", values.keterangan || "");
+    formData.append("status_kunjungan", values.status_kunjungan || "BELUM");
+    formData.append(
+      "tanggal_bayar",
+      values.tanggal_bayar
         ? values.tanggal_bayar.toISOString().split("T")[0]
-        : null,
-      // status_kunjungan sudah berupa string 'BELUM'/'SUDAH'
-    };
+        : ""
+    );
 
-    // Endpoint PUT/PATCH untuk mengupdate JadwalAngsuran
-    const url = `/api/jadwal-angsuran?id=${editingAngsuran.id}`;
+    // tambahkan file jika ada
+    if (fileList.length > 0 && fileList[0].originFileObj) {
+      formData.append("file", fileList[0].originFileObj);
+    }
+
+    const url = `/api/tagihan?id=${editingAngsuran.id}`;
 
     try {
       const response = await fetch(url, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        method: "PUT",
+        body: formData,
       });
 
       if (response.ok) {
@@ -174,7 +128,8 @@ const AngsuranUpdateForm: React.FC<AngsuranFormProps> = ({
       open={isModalVisible}
       title={title}
       onCancel={() => setIsModalVisible(false)}
-      width={450}
+      width={700}
+      style={{ top: 20 }}
       footer={[
         <Button key="back" onClick={() => setIsModalVisible(false)}>
           Tutup
@@ -194,10 +149,10 @@ const AngsuranUpdateForm: React.FC<AngsuranFormProps> = ({
         <Card size="small" className="mb-4 bg-gray-50 border-gray-200">
           <Row gutter={16} className="text-sm">
             <Col span={12}>
-              <Text type="secondary">Pelanggan:</Text>
+              <Text type="secondary">Debitur:</Text>
             </Col>
             <Col span={12} className="text-right">
-              <Text strong>{editingAngsuran.customerName}</Text>
+              <Text strong>{editingAngsuran.Dapem.DataDebitur.name}</Text>
             </Col>
 
             <Col span={12}>
@@ -210,22 +165,32 @@ const AngsuranUpdateForm: React.FC<AngsuranFormProps> = ({
             </Col>
 
             <Col span={12}>
+              <Text type="secondary">Angsuran Ke:</Text>
+            </Col>
+            <Col span={12} className="text-right">
+              <Text>{editingAngsuran.angsuran_ke}</Text>
+            </Col>
+
+            <Col span={12}>
               <Text type="secondary">Jumlah Tagihan:</Text>
             </Col>
             <Col span={12} className="text-right">
-              <Text strong className="text-lg text-red-600">
-                {formatterRupiah(editingAngsuran.totalAngsuran)}
-              </Text>
+              <Tag color="volcano" className="font-medium">
+                {formatterRupiah(
+                  editingAngsuran.pokok + editingAngsuran.margin
+                )}
+              </Tag>
             </Col>
           </Row>
         </Card>
       )}
-
+      <div className="mt-4"></div>
       <Form
         form={form}
-        layout="vertical"
+        layout="horizontal"
         onFinish={onFinish}
-        initialValues={{ status_kunjungan: "BELUM" }}
+        initialValues={{ status_kunjungan: data?.status_kunjungan || "BELUM" }}
+        labelCol={{ span: 6 }}
       >
         <Form.Item
           name="tanggal_bayar"
@@ -247,7 +212,7 @@ const AngsuranUpdateForm: React.FC<AngsuranFormProps> = ({
           name="keterangan"
           label={
             <Space>
-              <Info size={16} /> Keterangan Pembayaran
+              <Info size={16} /> Keterangan
             </Space>
           }
         >
@@ -267,119 +232,166 @@ const AngsuranUpdateForm: React.FC<AngsuranFormProps> = ({
             <Option value="SUDAH">SUDAH</Option>
           </Select>
         </Form.Item>
+        <Form.Item label="Upload berkas">
+          {data?.file ? (
+            <Card
+              size="small"
+              className="bg-gray-50 border-dashed border-gray-300 text-center"
+            >
+              <div className="flex justify-center gap-6 items-center">
+                <Button
+                  icon={<Eye />}
+                  type="primary"
+                  htmlType="button"
+                  onClick={() => data.file && window.open(data.file, "_blank")}
+                >
+                  Lihat File
+                </Button>
+
+                <Button
+                  danger
+                  size="small"
+                  htmlType="button"
+                  onClick={() => {
+                    Modal.confirm({
+                      title: "Hapus File?",
+                      content:
+                        "File lama akan dihapus dari Azure. Anda dapat upload file baru setelah ini.",
+                      okText: "Hapus",
+                      cancelText: "Batal",
+                      async onOk() {
+                        if (!data?.file) return;
+                        try {
+                          message.loading({
+                            content: "Menghapus file...",
+                            key: "del",
+                          });
+
+                          // 1️⃣ Hapus dari Azure
+                          const res = await fetch(
+                            `/api/azure-file?url=${encodeURIComponent(
+                              data.file
+                            )}`,
+                            { method: "DELETE" }
+                          );
+                          const result = await res.json();
+
+                          if (!res.ok) {
+                            message.error({
+                              content:
+                                result.msg ||
+                                "Gagal menghapus file dari Azure.",
+                              key: "del",
+                            });
+                            return;
+                          }
+
+                          // 2️⃣ Hapus dari database
+                          await fetch(
+                            `/api/tagihan-file?id=${editingAngsuran?.id}`,
+                            {
+                              method: "DELETE",
+                            }
+                          );
+
+                          // 3️⃣ Update UI
+                          setFileList([]);
+                          setData({ ...data, file: null });
+
+                          message.success({
+                            content:
+                              "File berhasil dihapus dari Azure dan database.",
+                            key: "del",
+                          });
+                        } catch (err) {
+                          console.error(err);
+                          message.error({
+                            content: "Terjadi kesalahan saat menghapus file.",
+                            key: "del",
+                          });
+                        }
+                      },
+                    });
+                  }}
+                >
+                  Hapus File
+                </Button>
+              </div>
+            </Card>
+          ) : (
+            <Upload
+              beforeUpload={() => false}
+              fileList={fileList}
+              onChange={({ fileList }) => setFileList(fileList)}
+              accept=".jpg,.jpeg,.png,.pdf"
+              maxCount={1}
+              listType="text"
+            >
+              {fileList.length === 0 && (
+                <Button icon={<UploadCloud />}>Upload File Baru</Button>
+              )}
+            </Upload>
+          )}
+        </Form.Item>
       </Form>
     </Modal>
   );
 };
 
-// =========================================================================
-// MAIN PAGE (Manajemen Tagihan/Angsuran)
-// =========================================================================
-
 export default function AngsuranManagementPage() {
-  // Data dummy yang sudah direvisi sesuai model Angsuran/JadwalAngsuran
-  const mockData: Angsuran[] = [
-    {
-      id: "JA001",
-      dapemId: "DAPEM001",
-      no_trx: "TRX/001/01",
-      customerName: "Budi Santoso",
-      pokok: 400000,
-      margin: 100000,
-      totalAngsuran: 500000,
-      angsuran_ke: 1,
-      jadwal_bayar: "2025-05-20",
-      tanggal_bayar: "2025-05-18",
-      keterangan: "Lunas Awal",
-      file: null,
-      status_kunjungan: "SUDAH",
-      statusPembayaran: "LUNAS",
-    },
-    {
-      id: "JA002",
-      dapemId: "DAPEM001",
-      no_trx: "TRX/001/02",
-      customerName: "Budi Santoso",
-      pokok: 400000,
-      margin: 100000,
-      totalAngsuran: 500000,
-      angsuran_ke: 2,
-      jadwal_bayar: "2025-06-20",
-      tanggal_bayar: null,
-      keterangan: null,
-      file: null,
-      status_kunjungan: "BELUM",
-      statusPembayaran: "BELUM LUNAS",
-    },
-    {
-      id: "JA003",
-      dapemId: "DAPEM002",
-      no_trx: "TRX/002/01",
-      customerName: "Citra Dewi",
-      pokok: 700000,
-      margin: 50000,
-      totalAngsuran: 750000,
-      angsuran_ke: 1,
-      jadwal_bayar: "2025-04-25",
-      tanggal_bayar: null,
-      keterangan: null,
-      file: null,
-      status_kunjungan: "SUDAH",
-      statusPembayaran: "TERLAMBAT",
-    },
-  ];
-
-  // Logic untuk mendapatkan status aktual saat inisialisasi atau fetch
-  const initialData = mockData.map((item) => ({
-    ...item,
-    totalAngsuran: item.pokok + item.margin,
-    statusPembayaran: determineStatus(item.jadwal_bayar, item.tanggal_bayar),
-  }));
-
-  const [pageProps, setPageProps] = useState<IPageProps<Angsuran>>({
+  const [pageProps, setPageProps] = useState<IPageProps<ITagihan>>({
     loading: false,
     page: 1,
     pageSize: 50,
-    data: initialData,
+    data: [],
     filters: [],
-    total: initialData.length,
+    total: 0,
   });
 
-  const { canUpdate, canDelete } = usePermission();
+  const { canUpdate } = usePermission();
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const [editingAngsuran, setEditingAngsuran] = useState<Angsuran | null>(null);
+  const [editingAngsuran, setEditingAngsuran] = useState<ITagihan | null>(null);
 
-  const handleEdit = (record: Angsuran) => {
+  const getData = async () => {
+    setPageProps((prev) => ({ ...prev, loading: true }));
+
+    try {
+      const search =
+        pageProps.filters.find((f) => f.key === "search")?.value || "";
+      const week =
+        pageProps.filters.find((f) => f.key === "week")?.value || "current";
+
+      const response = await fetch(
+        `/api/tagihan?search=${encodeURIComponent(search)}&week=${week}`
+      );
+      const data = await response.json();
+
+      setPageProps((prev) => ({
+        ...prev,
+        data,
+        total: data.length,
+        loading: false,
+      }));
+    } catch (error) {
+      console.error(error);
+      message.error("Gagal mengambil data angsuran dari server.");
+      setPageProps((prev) => ({ ...prev, loading: false }));
+    }
+  };
+
+  const handleEdit = (record: ITagihan) => {
     setEditingAngsuran(record);
     setIsModalVisible(true);
   };
 
-  // Data fetching disimulasikan
-  const getData = async () => {
-    setPageProps((prev) => ({ ...prev, loading: true }));
-    // GANTI DENGAN FETCH API NYATA KE ENDPOINT JadwalAngsuran
-    await new Promise((resolve) => setTimeout(resolve, 500));
-    setPageProps((prev) => ({ ...prev, loading: false }));
-  };
-
-  const handleDelete = async (id: string) => {
-    // Simulasi Delete API (Ganti dengan logika API nyata untuk menghapus JadwalAngsuran)
-    try {
-      message.success(`Jadwal Angsuran ${id} berhasil dihapus (simulasi)!`);
-      await getData();
-    } catch (error: any) {
-      console.log(error);
-      message.error(`Gagal menghapus jadwal angsuran!`);
-    }
-  };
-
   useEffect(() => {
-    (async () => {
+    const timeout = setTimeout(async () => {
       await getData();
-    })();
+    }, 200);
+    return () => clearTimeout(timeout);
   }, [pageProps.page, pageProps.pageSize, pageProps.filters]);
 
-  const getStatusColor = (status: Angsuran["statusPembayaran"]) => {
+  const getStatusColor = (status: ITagihan["statusPembayaran"]) => {
     switch (status) {
       case "LUNAS":
         return "green";
@@ -392,7 +404,7 @@ export default function AngsuranManagementPage() {
     }
   };
 
-  const getKunjunganColor = (status: EStatusKunjungan) => {
+  const getKunjunganColor = (status: EKunjungan) => {
     switch (status) {
       case "SUDAH":
         return "blue";
@@ -402,12 +414,12 @@ export default function AngsuranManagementPage() {
     }
   };
 
-  const columns: TableProps<Angsuran>["columns"] = [
+  const columns: TableProps<ITagihan>["columns"] = [
     {
       title: "Info Debitur",
-      dataIndex: "customerName",
+      dataIndex: ["Dapem", "DataDebitur", "name"],
       key: "customerName",
-      sorter: (a, b) => a.customerName.localeCompare(b.customerName),
+      width: 180,
       render: (text, record) => (
         <Space direction="vertical" size={0}>
           <Tooltip title={`ID Dapem: ${record.dapemId}`}>
@@ -416,7 +428,10 @@ export default function AngsuranManagementPage() {
             </Text>
           </Tooltip>
           <Text type="secondary" style={{ fontSize: "11px" }}>
-            Angsuran ke-{record.angsuran_ke} | {record.no_trx}
+            Angsuran ke-{record.angsuran_ke}
+          </Text>
+          <Text type="secondary" style={{ fontSize: "11px" }}>
+            {record.id}
           </Text>
         </Space>
       ),
@@ -426,24 +441,31 @@ export default function AngsuranManagementPage() {
       dataIndex: "totalAngsuran",
       key: "totalAngsuran",
       align: "right",
-      sorter: (a, b) => a.totalAngsuran - b.totalAngsuran,
-      render: (value: number) => formatterRupiah(value),
+      render: (value, record) => (
+        <Tag color="volcano" className="font-medium">
+          {formatterRupiah(record.margin + record.pokok)}
+        </Tag>
+      ),
     },
     {
       title: "Jatuh Tempo",
       dataIndex: "jadwal_bayar",
       key: "jadwal_bayar",
       align: "center",
-      sorter: (a, b) => a.jadwal_bayar.localeCompare(b.jadwal_bayar),
-      render: (date: string) => dayjs(date).format("DD MMM YYYY"),
+      sorter: (a, b) =>
+        new Date(a.jadwal_bayar).getTime() - new Date(b.jadwal_bayar).getTime(),
+      render: (date: string | Date) => dayjs(date).format("DD MMM YYYY"),
     },
     {
       title: "Tanggal Bayar",
       dataIndex: "tanggal_bayar",
       key: "tanggal_bayar",
       align: "center",
-      sorter: (a, b) =>
-        (a.tanggal_bayar || "").localeCompare(b.tanggal_bayar || ""),
+      sorter: (a, b) => {
+        const aDate = a.tanggal_bayar ? new Date(a.tanggal_bayar).getTime() : 0;
+        const bDate = b.tanggal_bayar ? new Date(b.tanggal_bayar).getTime() : 0;
+        return aDate - bDate;
+      },
       render: (date: string | null) =>
         date ? (
           dayjs(date).format("DD MMM YYYY")
@@ -462,8 +484,17 @@ export default function AngsuranManagementPage() {
         { text: "Terlambat", value: "TERLAMBAT" },
       ],
       onFilter: (value, record) => record.statusPembayaran === value,
-      render: (status: Angsuran["statusPembayaran"]) => (
-        <Tag color={getStatusColor(status)} icon={<Clock size={14} />}>
+      render: (status: ITagihan["statusPembayaran"]) => (
+        <Tag
+          color={getStatusColor(status)}
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 4,
+            fontWeight: 600,
+          }}
+        >
+          <Clock size={12} style={{ marginRight: 2 }} />
           {status}
         </Tag>
       ),
@@ -478,7 +509,7 @@ export default function AngsuranManagementPage() {
         { text: "Belum", value: "BELUM" },
       ],
       onFilter: (value, record) => record.status_kunjungan === value,
-      render: (status: EStatusKunjungan) => (
+      render: (status: EKunjungan) => (
         <Tag color={getKunjunganColor(status)}>{status}</Tag>
       ),
     },
@@ -499,24 +530,6 @@ export default function AngsuranManagementPage() {
               title="Catat Pembayaran/Kunjungan"
             />
           )}
-          {canDelete("/tagihan") && (
-            <Popconfirm
-              title={`Hapus angsuran ${record.no_trx}?`}
-              description="Angsuran ini akan terhapus dari jadwal pembayaran."
-              onConfirm={() => handleDelete(record.id)}
-              okText="Ya, Hapus"
-              cancelText="Batal"
-              okButtonProps={{ danger: true }}
-            >
-              <Button
-                icon={<Trash2 size={16} />}
-                danger
-                type="text"
-                size="small"
-                title="Hapus Jadwal Angsuran"
-              />
-            </Popconfirm>
-          )}
         </Space>
       ),
     },
@@ -527,13 +540,9 @@ export default function AngsuranManagementPage() {
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold text-gray-900">
-          Manajemen Jadwal Angsuran{" "}
+          Data Tagihan Mingguan{" "}
           <Receipt size={28} className="inline-block text-red-500" />
         </h1>
-        <p className="text-gray-600 mt-1">
-          Lacak dan catat pembayaran angsuran yang tergenerate secara otomatis
-          dari pencairan (Dapem).
-        </p>
       </div>
 
       <Card className="shadow-lg">
@@ -555,6 +564,20 @@ export default function AngsuranManagementPage() {
               }}
               size="small"
             />
+            <Select
+              defaultValue="current"
+              style={{ width: 160 }}
+              size="small"
+              onChange={(val) => {
+                const filt = pageProps.filters.filter((f) => f.key !== "week");
+                filt.push({ key: "week", value: val });
+                setPageProps((prev) => ({ ...prev, filters: filt }));
+              }}
+            >
+              <Option value="prev">Minggu Lalu</Option>
+              <Option value="current">Minggu Ini</Option>
+              <Option value="next">Minggu Depan</Option>
+            </Select>
           </div>
 
           {/* Tabel Data Angsuran */}
@@ -575,6 +598,25 @@ export default function AngsuranManagementPage() {
             locale={{ emptyText: "Tidak ada jadwal angsuran ditemukan." }}
             size="small"
             loading={pageProps.loading}
+            summary={(data) => {
+              const total = data.reduce(
+                (sum, record) => sum + record.pokok + record.margin,
+                0
+              );
+
+              return (
+                <Table.Summary.Row>
+                  <Table.Summary.Cell index={0} colSpan={columns.length - 1}>
+                    <Text strong>Total Tagihan Minggu Ini:</Text>
+                  </Table.Summary.Cell>
+                  <Table.Summary.Cell index={columns.length - 1} align="right">
+                    <Tag color="red" className="font-semibold">
+                      {formatterRupiah(total)}
+                    </Tag>
+                  </Table.Summary.Cell>
+                </Table.Summary.Row>
+              );
+            }}
           />
         </Space>
       </Card>
