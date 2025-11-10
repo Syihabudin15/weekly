@@ -11,7 +11,6 @@ import {
   Users,
   UserCog,
   Package,
-  FileText,
   Calendar,
   Settings,
   LogOut,
@@ -22,8 +21,8 @@ import {
   BookMarkedIcon,
   FileBadge2,
   Key,
-  Receipt,
   CircleDollarSignIcon,
+  GitBranch,
 } from "lucide-react";
 import "@ant-design/v5-patch-for-react-19";
 import { IPermission } from "./Interface";
@@ -96,6 +95,12 @@ export const menuItems: MenuItem[] = [
     name: "Produk Kredit",
     icon: Package,
     requiredPermission: "/produk",
+  },
+  {
+    path: "/cabang",
+    name: "Manajemen Cabang",
+    icon: GitBranch,
+    requiredPermission: "/cabang",
   },
   {
     path: "/users",

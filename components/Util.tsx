@@ -48,7 +48,7 @@ export class PermissionChecker {
    * Check if user can delete
    */
   canDelete(path: string): boolean {
-    return this.can(path, "proses");
+    return this.can(path, "delete");
   }
   canProses(path: string): boolean {
     return this.can(path, "proses");
@@ -86,7 +86,6 @@ import { useSession } from "next-auth/react";
 import { useMemo } from "react";
 import { IPermission } from "./Interface";
 import moment from "moment";
-import { message } from "antd";
 
 export function usePermission() {
   const { data: session } = useSession();
@@ -173,35 +172,3 @@ export function getUsiaMasuk(birthdate: string | Date, nowdate: string | Date) {
 
   return `${years} tahun, ${months} bulan, ${days} hari`;
 }
-
-const uploadFile = async (file: File | null, fieldName: string) => {
-  if (!file) return null;
-
-  const formData = new FormData();
-  formData.append(fieldName, file); // Menambahkan file dengan nama field yang ditentukan
-
-  try {
-    const res = await fetch("/api/upload", {
-      method: "POST",
-      body: formData,
-      // Penting: Jangan atur Content-Type: 'multipart/form-data' secara manual
-      // Browser akan mengaturnya secara otomatis dengan boundary yang benar
-    });
-
-    if (!res.ok) {
-      throw new Error(`Gagal mengunggah file ${fieldName}: ${res.statusText}`);
-    }
-
-    const data = await res.json();
-    // Asumsi API mengembalikan { url: "..." }
-    if (!data.url) {
-      throw new Error("Respons API tidak mengandung URL file.");
-    }
-    message.success(`File ${fieldName} berhasil diunggah.`);
-    return data.url as string; // Mengembalikan URL yang diunggah
-  } catch (error) {
-    console.error(error);
-    message.error(`Gagal mengunggah ${fieldName}.`);
-    throw error; // Melempar error agar proses submit dibatalkan
-  }
-};

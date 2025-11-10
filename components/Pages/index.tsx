@@ -45,6 +45,10 @@ export const DetailPengajuan = dynamic(
     loading: () => <LoaderCircle size={15} />,
   }
 );
+export const CabangPage = dynamic(() => import("@/components/Pages/Cabang"), {
+  ssr: false,
+  loading: () => <LoaderCircle size={15} />,
+});
 export const JenisPage = dynamic(() => import("@/components/Pages/Jenis"), {
   ssr: false,
   loading: () => <LoaderCircle size={15} />,

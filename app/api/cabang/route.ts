@@ -13,7 +13,7 @@ export const GET = async (req: NextRequest) => {
     skip: skip,
     take: pageSize,
   });
-  const total = await prisma.user.count({
+  const total = await prisma.unit.count({
     where: {
       ...(search && { name: { contains: search } }),
       status: true,
@@ -22,6 +22,7 @@ export const GET = async (req: NextRequest) => {
 
   return ResponseServer(200, "OK", data, total);
 };
+
 export const POST = async (req: NextRequest) => {
   const data: Unit = await req.json();
   const { id, ...saved } = data;
@@ -29,6 +30,7 @@ export const POST = async (req: NextRequest) => {
 
   return ResponseServer(200, `Unit Cabang ${data.name} berhasil ditambahkan`);
 };
+
 export const PUT = async (req: NextRequest) => {
   const data: Unit = await req.json();
   const { id, ...saved } = data;
@@ -39,6 +41,7 @@ export const PUT = async (req: NextRequest) => {
 
   return ResponseServer(200, `Edit data unit cabang ${data.name} berhasil`);
 };
+
 export const DELETE = async (req: NextRequest) => {
   const id = req.nextUrl.searchParams.get("id");
   if (!id) return ResponseServer(404, "Maaf data unit cabang tidak ditemukan!");

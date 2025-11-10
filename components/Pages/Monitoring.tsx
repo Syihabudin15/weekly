@@ -22,7 +22,6 @@ import {
 import { IDapem, IPageProps } from "../Interface";
 import Link from "next/link";
 import { printContract } from "./PrintAkad";
-import { getWilayahName } from "../ServerUtil";
 
 const { Title } = Typography;
 
@@ -35,7 +34,7 @@ const ApplicationStatusMonitoring = () => {
     total: 0,
     filters: [],
   });
-  const { canProses, canUpdate, canDelete } = usePermission();
+  const { canProses, canUpdate } = usePermission();
 
   const getData = async () => {
     setPageProps((prev) => ({ ...prev, loading: true }));
@@ -53,6 +52,24 @@ const ApplicationStatusMonitoring = () => {
     }, 200);
     return () => clearTimeout(timeout);
   }, [pageProps.filters, pageProps.page, pageProps.pageSize]);
+
+  const handleAkad = async (record: IDapem) => {
+    setPageProps((prev) => ({ ...prev, loading: true }));
+    const req = await fetch("/api/wilayah", {
+      method: "POST",
+      body: JSON.stringify({ id: record.dataDebiturId }),
+    });
+    const { provinsi, kota, kecamatan, kelurahan } = await req.json();
+    record.DataDebitur = {
+      ...record.DataDebitur,
+      provinsi,
+      kota,
+      kecamatan,
+      kelurahan,
+    };
+    setPageProps((prev) => ({ ...prev, loading: false }));
+    printContract(record);
+  };
 
   const columns: TableProps<IDapem>["columns"] = useMemo(
     () => [
@@ -181,7 +198,7 @@ const ApplicationStatusMonitoring = () => {
             <Tooltip title="Cetak Akad">
               <Button
                 size="small"
-                onClick={() => printContract(record)}
+                onClick={() => handleAkad(record)}
                 icon={<Printer size={14} />}
               ></Button>
             </Tooltip>
@@ -189,7 +206,7 @@ const ApplicationStatusMonitoring = () => {
         ),
       },
     ],
-    []
+    [canProses, canUpdate, handleAkad]
   );
 
   return (

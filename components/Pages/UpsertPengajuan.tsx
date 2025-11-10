@@ -9,7 +9,6 @@ import {
   Input,
   InputNumber,
   message,
-  Modal,
   Row,
   Select,
   Space,
@@ -120,6 +119,18 @@ export default function UpsertPengajuan({
             name: data.file_akad,
             status: "done",
             url: data.file_akad,
+          },
+        ]
+      : []
+  );
+  const [fileCairList, setFileCairList] = useState<UploadFile[]>(
+    data && data.file_pencairan
+      ? [
+          {
+            uid: Date.now().toString(),
+            name: data.file_pencairan,
+            status: "done",
+            url: data.file_pencairan,
           },
         ]
       : []
@@ -603,8 +614,12 @@ export default function UpsertPengajuan({
             </Form.Item>
           </Col>
         </Row>
-        <Form.Item name="description" label="Keterangan" className="mt-4">
-          <TextArea rows={2} placeholder="Keterangan tambahan (optinal)" />
+        <Form.Item
+          name="description"
+          label="Tujuan penggunaan"
+          className="mt-4"
+        >
+          <TextArea rows={2} placeholder="Tujuan mengajukan pinjaman" />
         </Form.Item>
         <Divider />
 
@@ -964,6 +979,88 @@ export default function UpsertPengajuan({
                   listType={"text"}
                 >
                   {fileAkadList.length === 0 && (
+                    <Button
+                      icon={<UploadCloud size={16} />}
+                      type="dashed"
+                      htmlType="button"
+                    >
+                      Upload PDF
+                    </Button>
+                  )}
+                </Upload>
+              </Form.Item>
+            </Col>
+            {/* FILE AKAD */}
+            <Col xs={24} lg={12}>
+              <Form.Item name="file_pencairan" label="File Pencairan (PDF)">
+                <Upload
+                  accept=".pdf"
+                  maxCount={1}
+                  fileList={fileCairList}
+                  beforeUpload={async (file) => {
+                    const formData = new FormData();
+                    formData.append("file", file);
+                    formData.append("field_name", "file_pencairan");
+
+                    try {
+                      const res = await fetch("/api/file", {
+                        method: "POST",
+                        body: formData,
+                      });
+
+                      const result = await res.json();
+                      if (res.ok && result.url) {
+                        // simpan URL ke state dan form
+                        const newFile = {
+                          uid: Date.now().toString(),
+                          name: file.name,
+                          status: "done",
+                          url: result.url,
+                        } as UploadFile;
+
+                        setFileCairList([newFile]);
+                        form.setFieldsValue({
+                          file_pencairan: result.url, // langsung isi URL ke field form
+                        });
+
+                        message.success("File berhasil diupload!");
+                      } else {
+                        message.error(result.msg || "Gagal upload file");
+                      }
+                    } catch (err) {
+                      message.error("Terjadi kesalahan saat upload file.");
+                    }
+
+                    // cegah upload otomatis bawaan AntD
+                    return Upload.LIST_IGNORE;
+                  }}
+                  onRemove={async (file) => {
+                    try {
+                      if (file.url) {
+                        const res = await fetch(
+                          `/api/file?url=${encodeURIComponent(file.url)}`,
+                          {
+                            method: "DELETE",
+                          }
+                        );
+
+                        const result = await res.json();
+                        if (res.ok) {
+                          message.success("File berhasil dihapus.");
+                        } else {
+                          message.error(result.msg || "Gagal menghapus file.");
+                        }
+                      }
+                    } catch (err) {
+                      message.error("Terjadi kesalahan saat menghapus file.");
+                    }
+
+                    setFileCairList([]);
+                    form.setFieldsValue({ file_pencairan: null });
+                  }}
+                  listType={"text"}
+                >
+                  {fileCairList.length === 0 && (
                     <Button
                       icon={<UploadCloud size={16} />}
                       type="dashed"

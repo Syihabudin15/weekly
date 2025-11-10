@@ -79,6 +79,7 @@ const BerkasPendukungTab = ({
               href={item.url}
             ></Button>,
             <Button
+              key={"view"}
               type="primary"
               icon={<Eye size={12} />}
               onClick={() => ViewBerkas(item.name, item.url)}
