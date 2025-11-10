@@ -282,8 +282,8 @@ export default function CreditSimulationPage() {
                     ]}
                   >
                     <InputNumber<number>
-                      min={1000000}
-                      step={500000}
+                      min={10000}
+                      step={10000}
                       formatter={formatter}
                       parser={(displayValue) => {
                         const cleanValue = displayValue
@@ -367,9 +367,9 @@ export default function CreditSimulationPage() {
                     ]}
                   >
                     <InputNumber<number>
-                      min={500000}
+                      min={100000}
                       max={selectedProduct?.max_plafon || 2000000}
-                      step={500000}
+                      step={10000}
                       formatter={formatter}
                       parser={(displayValue) => {
                         const cleanValue = displayValue
@@ -434,7 +434,7 @@ export default function CreditSimulationPage() {
               >
                 <InputNumber<number>
                   min={0}
-                  step={500000}
+                  step={10000}
                   formatter={formatter}
                   parser={(displayValue) => {
                     const cleanValue = displayValue

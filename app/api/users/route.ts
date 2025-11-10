@@ -45,6 +45,7 @@ export const PUT = async (req: NextRequest) => {
 
   return ResponseServer(200, `Edit data pengguna ${data.name} berhasil`);
 };
+
 export const DELETE = async (req: NextRequest) => {
   const id = req.nextUrl.searchParams.get("id");
   if (!id) return ResponseServer(404, "Maaf data pengguna tidak ditemukan!");
