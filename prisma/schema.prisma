@@ -37,7 +37,7 @@ model Role {
   id          String  @id @default(uuid())
   name        String
   description String?
-  permissions String  @default("[]") @db.Text
+  permissions String  @db.Text
 
   status     Boolean  @default(true)
   created_at DateTime @default(now())
