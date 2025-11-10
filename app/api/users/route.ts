@@ -2,6 +2,7 @@ import prisma from "@/components/Prisma";
 import { GetDefaultPageprop, ResponseServer } from "@/components/ServerUtil";
 import { User } from "@prisma/client";
 import { NextRequest } from "next/server";
+import bcrypt from "bcrypt";
 
 export const GET = async (req: NextRequest) => {
   const { pageSize, search, skip } = GetDefaultPageprop(req);
@@ -29,6 +30,7 @@ export const GET = async (req: NextRequest) => {
 export const POST = async (req: NextRequest) => {
   const data: User = await req.json();
   const { id, ...saved } = data;
+  data.password = await bcrypt.hash(data.password, 10);
   await prisma.user.create({ data: saved });
 
   return ResponseServer(200, `Pengguna ${data.name} berhasil ditambahkan`);
