@@ -36,6 +36,15 @@ async function main() {
     update: { permissions: JSON.stringify(perms) },
   });
 
+  const unit = await prisma.unit.upsert({
+    where: { name: "PUSAT" },
+    update: {},
+    create: {
+      name: "PUSAT",
+      code: "PUSAT",
+    },
+  });
+
   const pass = await bcrypt.hash("Tsani182", 10);
   await prisma.user.upsert({
     where: { username: "syihabudin" },
@@ -45,6 +54,7 @@ async function main() {
       password: pass,
       position: "IT",
       roleId: role.id,
+      unitId: unit.id,
     },
     update: {},
   });

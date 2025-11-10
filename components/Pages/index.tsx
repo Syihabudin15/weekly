@@ -62,6 +62,13 @@ export const TagihanPage = dynamic(() => import("@/components/Pages/Tagihan"), {
   ssr: false,
   loading: () => <LoaderCircle size={15} />,
 });
+export const PelunasanPage = dynamic(
+  () => import("@/components/Pages/Pelunasan"),
+  {
+    ssr: false,
+    loading: () => <LoaderCircle size={15} />,
+  }
+);
 
 export const RolePage = dynamic(() => import("@/components/Pages/Role"), {
   ssr: false,

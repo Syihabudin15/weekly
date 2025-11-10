@@ -3,8 +3,10 @@ import {
   DataDebitur,
   DataKeluarga,
   JadwalAngsuran,
+  Jaminan,
   Jenis,
   Produk,
+  Unit,
   User,
 } from "@prisma/client";
 
@@ -21,6 +23,10 @@ export interface IPageProps<T> {
   total: number;
   filters: { key: string; value: any }[];
   data: T[];
+}
+
+export interface IUser extends User {
+  Unit: Unit;
 }
 
 export interface CalculationInputs {
@@ -54,13 +60,14 @@ interface IDataDebitur extends DataDebitur {
   DataKeluarga: DataKeluarga[];
 }
 export interface IDapem extends Dapem {
-  // DataKeluarga: DataKeluarga[];
   DataDebitur: IDataDebitur;
   Produk: Produk;
   Jenis: Jenis;
   CreatedBy: User;
   ApprovedBy: User;
   JadwalAngsuran: JadwalAngsuran[];
+  Jaminan: Jaminan[];
+  Petugas: User;
 }
 
 export interface ITagihan extends JadwalAngsuran {

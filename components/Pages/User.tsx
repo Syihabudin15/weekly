@@ -30,10 +30,11 @@ import {
   Phone,
   Briefcase,
   Trash2,
+  MapPinPlusInsideIcon,
 } from "lucide-react";
 import type { TableProps } from "antd";
-import { IPageProps } from "../Interface";
-import { Role, User as UserType } from "@prisma/client";
+import { IPageProps, IUser } from "../Interface";
+import { Role, Unit } from "@prisma/client";
 import { usePermission } from "../Util";
 
 const { Text } = Typography;
@@ -42,8 +43,9 @@ const { Option } = Select;
 interface UserFormProps {
   isModalVisible: boolean;
   setIsModalVisible: (visible: boolean) => void;
-  editingUser: UserType | null;
+  editingUser: IUser | null;
   roles: Role[];
+  cabangs: Unit[];
   getData: Function;
 }
 
@@ -52,6 +54,7 @@ const UserManagementForm: React.FC<UserFormProps> = ({
   setIsModalVisible,
   editingUser,
   roles,
+  cabangs,
   getData,
 }) => {
   const [loading, setLoading] = useState(false);
@@ -111,6 +114,7 @@ const UserManagementForm: React.FC<UserFormProps> = ({
         </Button>,
       ]}
       loading={loading}
+      style={{ top: 20 }}
     >
       <Form
         form={form}
@@ -230,6 +234,27 @@ const UserManagementForm: React.FC<UserFormProps> = ({
             </Form.Item>
           </Col>
         </Row>
+        <Row gutter={16}>
+          <Col span={12}>
+            <Form.Item
+              name="unitId"
+              label={
+                <Space>
+                  <MapPinPlusInsideIcon size={16} /> Unit Cabang
+                </Space>
+              }
+              rules={[{ required: true }]}
+            >
+              <Select placeholder="Pilih Cabang">
+                {cabangs.map((role) => (
+                  <Option key={role.id} value={role.id}>
+                    {role.name}
+                  </Option>
+                ))}
+              </Select>
+            </Form.Item>
+          </Col>
+        </Row>
       </Form>
     </Modal>
   );
@@ -238,7 +263,7 @@ const UserManagementForm: React.FC<UserFormProps> = ({
 // --- 3. Halaman Manajemen Pengguna (Table) ---
 
 export default function UserManagementPage() {
-  const [pageProps, setPageProps] = useState<IPageProps<UserType>>({
+  const [pageProps, setPageProps] = useState<IPageProps<IUser>>({
     loading: false,
     page: 1,
     pageSize: 50,
@@ -248,10 +273,11 @@ export default function UserManagementPage() {
   });
   const { canWrite, canUpdate, canDelete } = usePermission();
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const [editingUser, setEditingUser] = useState<UserType | null>(null);
+  const [editingUser, setEditingUser] = useState<IUser | null>(null);
   const [roles, setRoles] = useState<Role[]>([]);
+  const [cabangs, setCabangs] = useState<Unit[]>([]);
 
-  const handleEdit = (record: UserType) => {
+  const handleEdit = (record: IUser) => {
     setEditingUser(record);
     setIsModalVisible(true);
   };
@@ -302,10 +328,13 @@ export default function UserManagementPage() {
       const request = await fetch("/api/roles?page=1&pageSize=100");
       const { data } = await request.json();
       setRoles(data);
+      const reqUnit = await fetch("/api/cabang?page=1&pageSize=100");
+      const { data: dataCabang } = await reqUnit.json();
+      setCabangs(dataCabang);
     })();
   }, []);
 
-  const columns: TableProps<UserType>["columns"] = [
+  const columns: TableProps<IUser>["columns"] = [
     {
       title: "Nama Pengguna",
       dataIndex: "name",
@@ -353,6 +382,11 @@ export default function UserManagementPage() {
       ),
     },
     {
+      title: "Cabang",
+      dataIndex: ["Unit", "name"],
+      key: "unitCabang",
+    },
+    {
       title: "Dibuat",
       dataIndex: "created_at",
       key: "created_at",
@@ -365,11 +399,13 @@ export default function UserManagementPage() {
       align: "center",
       render: (_, record) => (
         <Space size="middle">
-          <Button
-            icon={<Edit size={16} />}
-            onClick={() => handleEdit(record)}
-            type="link"
-          ></Button>
+          {canUpdate("/users") && (
+            <Button
+              icon={<Edit size={16} />}
+              onClick={() => handleEdit(record)}
+              type="link"
+            ></Button>
+          )}
           {canDelete("/users") && (
             <Popconfirm
               title={`Hapus pengguna ${record.name}?`}
@@ -460,6 +496,7 @@ export default function UserManagementPage() {
         setIsModalVisible={setIsModalVisible}
         editingUser={editingUser}
         roles={roles} // Ganti dengan data Role dari API Anda
+        cabangs={cabangs} // Ganti dengan data Role dari API Anda
         getData={getData}
         key={editingUser ? editingUser.id : "created"}
       />

@@ -9,16 +9,20 @@ import {
   Input,
   InputNumber,
   message,
+  Modal,
   Row,
   Select,
   Space,
   Typography,
+  Upload,
+  UploadFile,
 } from "antd";
 import {
   BookUser,
   Calculator,
   Clock,
   DollarSign,
+  FileText,
   Layers,
   Layers2,
   MinusCircle,
@@ -27,7 +31,9 @@ import {
   PlusCircle,
   SaveIcon,
   Scale,
+  ShieldCheck,
   TrendingUp,
+  UploadCloud,
   User,
   Zap,
 } from "lucide-react";
@@ -38,7 +44,7 @@ import {
   formatterRupiah,
 } from "../Util";
 import { useEffect, useState } from "react";
-import { Jenis, Produk } from "@prisma/client";
+import { Jenis, Produk, User as UserType } from "@prisma/client";
 import { CalculationInputs, CalculationResults, IDapem } from "../Interface";
 import { useSession } from "next-auth/react";
 import moment from "moment";
@@ -92,6 +98,34 @@ export default function UpsertPengajuan({
     selectedDistrict: data ? data.DataDebitur.kecamatan : undefined,
     village: [],
   });
+
+  // **Tambahkan state untuk file (opsional jika menggunakan Form.Item)**
+  const [filePermohonanList, setFilePermohonanList] = useState<UploadFile[]>(
+    data && data.file_permohonan
+      ? [
+          {
+            uid: Date.now().toString(),
+            name: data.file_permohonan,
+            status: "done",
+            url: data.file_permohonan,
+          },
+        ]
+      : []
+  );
+  const [fileAkadList, setFileAkadList] = useState<UploadFile[]>(
+    data && data.file_akad
+      ? [
+          {
+            uid: Date.now().toString(),
+            name: data.file_akad,
+            status: "done",
+            url: data.file_akad,
+          },
+        ]
+      : []
+  );
+  const [users, setUsers] = useState<UserType[]>([]);
+
   const handleProductChange = (productId: string) => {
     const selectedProduct = products.find((p) => p.id === productId);
     setSelectedProduct(selectedProduct || null);
@@ -199,8 +233,6 @@ export default function UpsertPengajuan({
       } else {
         message.success("Simulasi berhasil dihitung! DSR memenuhi syarat.");
       }
-
-      message.success("Simulasi berhasil dihitung!");
     } catch (error) {
       console.error(error);
       message.error("Gagal menghitung simulasi.");
@@ -240,12 +272,16 @@ export default function UpsertPengajuan({
     (async () => {
       const reqProduct = await fetch("/api/produk?page=1&pageSize=100");
       const reqJenis = await fetch("/api/jenis?page=1&pageSize=100");
+      const reqUser = await fetch("/api/users?page=1&pageSize=1000");
       const { data: dataProduk } = await reqProduct.json();
       const { data: dataJenis } = await reqJenis.json();
+      const { data: dataUser } = await reqUser.json();
       setProducts(dataProduk);
       setJeniss(dataJenis);
+      setUsers(dataUser);
     })();
     if (data) {
+      console.log({ data });
       onCekSimulasi(form.getFieldsValue() as CalculationInputs);
     }
   }, []);
@@ -369,8 +405,8 @@ export default function UpsertPengajuan({
               ]}
             >
               <InputNumber<number>
-                min={1000000}
-                step={500000}
+                min={200000}
+                step={100000}
                 formatter={formatterRupiah}
                 parser={(displayValue) => {
                   const cleanValue = displayValue
@@ -540,8 +576,8 @@ export default function UpsertPengajuan({
           <Col xs={12} lg={6}>
             <Form.Item
               name={["DataDebitur", "pekerjaan"]}
-              label="Pekerjaan"
-              rules={[{ required: true, message: "Wajib mengisi Pekerjaan" }]}
+              label="Jenis/Nama Usaha"
+              rules={[{ required: true, message: "Wajib mengisi usaha" }]}
             >
               <Input placeholder="Pedagang" />
             </Form.Item>
@@ -549,9 +585,9 @@ export default function UpsertPengajuan({
           <Col xs={12} lg={6}>
             <Form.Item
               name={["DataDebitur", "alamat_pekerjaan"]}
-              label="Alamat Pekerjaan"
+              label="Alamat Usaha"
               rules={[
-                { required: true, message: "Wajib mengisi Alamat Pekerjaan" },
+                { required: true, message: "Wajib mengisi Alamat usaha" },
               ]}
             >
               <TextArea placeholder="Jl. xx No x"></TextArea>
@@ -567,7 +603,9 @@ export default function UpsertPengajuan({
             </Form.Item>
           </Col>
         </Row>
-
+        <Form.Item name="description" label="Keterangan" className="mt-4">
+          <TextArea rows={2} placeholder="Keterangan tambahan (optinal)" />
+        </Form.Item>
         <Divider />
 
         {/* --- SEKSI DATA KELUARGA (TANGGUNGAN) --- */}
@@ -659,9 +697,287 @@ export default function UpsertPengajuan({
             </>
           )}
         </Form.List>
-        <Form.Item name="description" label="Keterangan" className="mt-4">
-          <TextArea rows={2} placeholder="Keterangan tambahan (optinal)" />
-        </Form.Item>
+        <Divider />
+        {/* --- SEKSI DATA JAMINAN --- */}
+        <Card
+          title={
+            <Space>
+              <ShieldCheck size={16} />
+              <Title level={5} className="mt-4 mb-2 text-blue-600">
+                Data Jaminan
+              </Title>
+            </Space>
+          }
+        >
+          <Form.List name={"Jaminan"}>
+            {(fields, { add, remove }) => (
+              <>
+                {fields.map(({ key, name, fieldKey, ...restField }) => (
+                  <Row gutter={[24, 24]} key={key}>
+                    <Form.Item
+                      {...restField}
+                      name={[name, "id"]}
+                      fieldKey={[fieldKey || "", "id"]}
+                      rules={[{ required: false, message: "Nama Wajib diisi" }]}
+                      // style={{ width: 130 }}
+                      hidden
+                    >
+                      <Input placeholder="id" />
+                    </Form.Item>
+                    <Col xs={12} lg={6}>
+                      <Form.Item
+                        {...restField}
+                        name={[name, "name"]}
+                        fieldKey={[fieldKey || "", "name"]}
+                        rules={[
+                          { required: true, message: "Nama Wajib diisi" },
+                        ]}
+                        // style={{ width: 130 }}
+                      >
+                        <Input placeholder="Jaminan" />
+                      </Form.Item>
+                    </Col>
+                    <Col xs={12} lg={6}>
+                      <Form.Item
+                        {...restField}
+                        name={[name, "taksiran"]}
+                        fieldKey={[fieldKey || "", "taksiran"]}
+                        rules={[{ required: true, message: "Taksiran harga" }]}
+                      >
+                        <InputNumber<number>
+                          min={0}
+                          step={10000}
+                          formatter={formatterRupiah}
+                          parser={(displayValue) => {
+                            const cleanValue = displayValue
+                              ? displayValue.replace(/[^0-9]/g, "")
+                              : "0";
+                            return parseFloat(cleanValue) || 0;
+                          }}
+                          className="w-full"
+                          style={{ width: "100%" }}
+                        />
+                      </Form.Item>
+                    </Col>
+                    <Col xs={12} lg={6}>
+                      <MinusCircle
+                        onClick={() => remove(name)}
+                        className="text-red-500"
+                      />
+                    </Col>
+                  </Row>
+                ))}
+                <Form.Item>
+                  <Button
+                    type="dashed"
+                    onClick={() => add()}
+                    block
+                    icon={<PlusCircle />}
+                  >
+                    Tambah Jaminan
+                  </Button>
+                </Form.Item>
+              </>
+            )}
+          </Form.List>
+          <Form.Item
+            name={"petugasId"}
+            label="Petugas Lapangan"
+            rules={[{ required: true, message: "Wajib mengisi petugas" }]}
+          >
+            <Select placeholder="Petugas">
+              {users.map((u: UserType) => (
+                <Option key={u.id} value={u.id}>
+                  {u.name}
+                </Option>
+              ))}
+            </Select>
+          </Form.Item>
+        </Card>
+        {/* --- SEKSI UPLOAD FILE PDF BARU --- */}
+        <Divider />
+        <Card
+          title={
+            <Space>
+              <FileText size={16} />
+              <Title level={5} className="mt-4 mb-2 text-blue-600">
+                Dokumen Permohonan (PDF)
+              </Title>
+            </Space>
+          }
+        >
+          <Row gutter={[24, 24]}>
+            {/* FILE PERMOHONAN */}
+            <Col xs={24} lg={12}>
+              <Form.Item
+                name="file_permohonan"
+                label="File Permohonan Kredit (PDF)"
+              >
+                <Upload
+                  accept=".pdf"
+                  maxCount={1}
+                  fileList={filePermohonanList}
+                  beforeUpload={async (file) => {
+                    const formData = new FormData();
+                    formData.append("file", file);
+                    formData.append("field_name", "file_permohonan");
+
+                    try {
+                      const res = await fetch("/api/file", {
+                        method: "POST",
+                        body: formData,
+                      });
+
+                      const result = await res.json();
+                      if (res.ok && result.url) {
+                        // simpan URL ke state dan form
+                        const newFile = {
+                          uid: Date.now().toString(),
+                          name: file.name,
+                          status: "done",
+                          url: result.url,
+                        } as UploadFile;
+
+                        setFilePermohonanList([newFile]);
+                        form.setFieldsValue({
+                          file_permohonan: result.url, // langsung isi URL ke field form
+                        });
+
+                        message.success("File berhasil diupload!");
+                      } else {
+                        message.error(result.msg || "Gagal upload file");
+                      }
+                    } catch (err) {
+                      message.error("Terjadi kesalahan saat upload file.");
+                    }
+
+                    // cegah upload otomatis bawaan AntD
+                    return Upload.LIST_IGNORE;
+                  }}
+                  onRemove={async (file) => {
+                    try {
+                      if (file.url) {
+                        const res = await fetch(
+                          `/api/file?url=${encodeURIComponent(file.url)}`,
+                          {
+                            method: "DELETE",
+                          }
+                        );
+
+                        const result = await res.json();
+                        if (res.ok) {
+                          message.success("File berhasil dihapus.");
+                        } else {
+                          message.error(result.msg || "Gagal menghapus file.");
+                        }
+                      }
+                    } catch (err) {
+                      message.error("Terjadi kesalahan saat menghapus file.");
+                    }
+
+                    setFilePermohonanList([]);
+                    form.setFieldsValue({ file_permohonan: null });
+                  }}
+                  listType={"text"}
+                >
+                  {filePermohonanList.length === 0 && (
+                    <Button
+                      icon={<UploadCloud size={16} />}
+                      type="dashed"
+                      htmlType="button"
+                    >
+                      Upload PDF
+                    </Button>
+                  )}
+                </Upload>
+              </Form.Item>
+            </Col>
+
+            {/* FILE AKAD */}
+            <Col xs={24} lg={12}>
+              <Form.Item name="file_akad" label="File Akad Kredit (PDF)">
+                <Upload
+                  accept=".pdf"
+                  maxCount={1}
+                  fileList={fileAkadList}
+                  beforeUpload={async (file) => {
+                    const formData = new FormData();
+                    formData.append("file", file);
+                    formData.append("field_name", "file_akad");
+
+                    try {
+                      const res = await fetch("/api/file", {
+                        method: "POST",
+                        body: formData,
+                      });
+
+                      const result = await res.json();
+                      if (res.ok && result.url) {
+                        // simpan URL ke state dan form
+                        const newFile = {
+                          uid: Date.now().toString(),
+                          name: file.name,
+                          status: "done",
+                          url: result.url,
+                        } as UploadFile;
+
+                        setFileAkadList([newFile]);
+                        form.setFieldsValue({
+                          file_akad: result.url, // langsung isi URL ke field form
+                        });
+
+                        message.success("File berhasil diupload!");
+                      } else {
+                        message.error(result.msg || "Gagal upload file");
+                      }
+                    } catch (err) {
+                      message.error("Terjadi kesalahan saat upload file.");
+                    }
+
+                    // cegah upload otomatis bawaan AntD
+                    return Upload.LIST_IGNORE;
+                  }}
+                  onRemove={async (file) => {
+                    try {
+                      if (file.url) {
+                        const res = await fetch(
+                          `/api/file?url=${encodeURIComponent(file.url)}`,
+                          {
+                            method: "DELETE",
+                          }
+                        );
+
+                        const result = await res.json();
+                        if (res.ok) {
+                          message.success("File berhasil dihapus.");
+                        } else {
+                          message.error(result.msg || "Gagal menghapus file.");
+                        }
+                      }
+                    } catch (err) {
+                      message.error("Terjadi kesalahan saat menghapus file.");
+                    }
+
+                    setFileAkadList([]);
+                    form.setFieldsValue({ file_akad: null });
+                  }}
+                  listType={"text"}
+                >
+                  {fileAkadList.length === 0 && (
+                    <Button
+                      icon={<UploadCloud size={16} />}
+                      type="dashed"
+                      htmlType="button"
+                    >
+                      Upload PDF
+                    </Button>
+                  )}
+                </Upload>
+              </Form.Item>
+            </Col>
+          </Row>
+        </Card>
+        {/* --- AKHIR SEKSI UPLOAD FILE --- */}
         <Divider />
         <Space>
           <Calculator size={16} />
@@ -749,9 +1065,9 @@ export default function UpsertPengajuan({
                     ]}
                   >
                     <InputNumber<number>
-                      min={500000}
+                      min={100000}
                       max={selectedProduct?.max_plafon || 2000000}
-                      step={500000}
+                      step={100000}
                       formatter={formatterRupiah}
                       parser={(displayValue) => {
                         const cleanValue = displayValue
@@ -890,7 +1206,7 @@ export default function UpsertPengajuan({
                   >
                     <InputNumber<number>
                       min={0}
-                      step={100000}
+                      step={10000}
                       formatter={formatterRupiah}
                       parser={(displayValue) => {
                         const cleanValue = displayValue
@@ -920,7 +1236,7 @@ export default function UpsertPengajuan({
                   >
                     <InputNumber<number>
                       min={0}
-                      step={100000}
+                      step={10000}
                       formatter={formatterRupiah}
                       parser={(displayValue) => {
                         const cleanValue = displayValue

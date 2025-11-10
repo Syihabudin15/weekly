@@ -12,10 +12,17 @@ import {
   Button,
 } from "antd";
 import dayjs from "dayjs";
-import { Edit, Info, Search, FolderOpen } from "lucide-react";
-import { calculateWeeklyPayment, formatterRupiah, STATUS_MAP } from "../Util";
+import { Edit, Info, Search, FolderOpen, Printer } from "lucide-react";
+import {
+  calculateWeeklyPayment,
+  formatterRupiah,
+  STATUS_MAP,
+  usePermission,
+} from "../Util";
 import { IDapem, IPageProps } from "../Interface";
 import Link from "next/link";
+import { printContract } from "./PrintAkad";
+import { getWilayahName } from "../ServerUtil";
 
 const { Title } = Typography;
 
@@ -28,6 +35,7 @@ const ApplicationStatusMonitoring = () => {
     total: 0,
     filters: [],
   });
+  const { canProses, canUpdate, canDelete } = usePermission();
 
   const getData = async () => {
     setPageProps((prev) => ({ ...prev, loading: true }));
@@ -136,7 +144,7 @@ const ApplicationStatusMonitoring = () => {
         width: 100,
         render: (value, record) => (
           <Space size="middle">
-            {record.status_sub === "PENDING" && (
+            {record.status_sub === "PENDING" && canProses("/monitoring") && (
               <Link href={"/pengajuan/" + record.id}>
                 <Tooltip
                   title={`Klik untuk melihat/proses pengajuan ${record.id}`}
@@ -149,11 +157,13 @@ const ApplicationStatusMonitoring = () => {
                 </Tooltip>
               </Link>
             )}
-            <Tooltip title={`Edit pengajuan ${record.id}`}>
-              <Link href={"/pengajuan/upsert/" + record.id}>
-                <Button icon={<Edit size={12} />} size="small"></Button>
-              </Link>
-            </Tooltip>
+            {canUpdate("/monitoring") && (
+              <Tooltip title={`Edit pengajuan ${record.id}`}>
+                <Link href={"/pengajuan/upsert/" + record.id}>
+                  <Button icon={<Edit size={12} />} size="small"></Button>
+                </Link>
+              </Tooltip>
+            )}
             {record.status_sub !== "PENDING" &&
               record.status_sub !== "DRAFT" && (
                 <Link href={"/pengajuan/" + record.id}>
@@ -168,6 +178,13 @@ const ApplicationStatusMonitoring = () => {
                   </Tooltip>
                 </Link>
               )}
+            <Tooltip title="Cetak Akad">
+              <Button
+                size="small"
+                onClick={() => printContract(record)}
+                icon={<Printer size={14} />}
+              ></Button>
+            </Tooltip>
           </Space>
         ),
       },

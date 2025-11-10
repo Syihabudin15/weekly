@@ -33,3 +33,31 @@ export function ResponseServer<T>(
     { status }
   );
 }
+
+export const getWilayahName = async (
+  provinsiId: number,
+  kotaId: number,
+  kecamatanId: number,
+  kelurahanId: number
+) => {
+  const base = "https://wilayah.id/api";
+  const headers = { "Content-Type": "application/json" };
+
+  const [prov, kota, kec, kel] = await Promise.all([
+    fetch(`${base}/provinsi/${provinsiId}`, { headers }).then((r) => r.json()),
+    fetch(`${base}/kabupaten/${kotaId}`, { headers }).then((r) => r.json()),
+    fetch(`${base}/kecamatan/${kecamatanId}`, { headers }).then((r) =>
+      r.json()
+    ),
+    fetch(`${base}/kelurahan/${kelurahanId}`, { headers }).then((r) =>
+      r.json()
+    ),
+  ]);
+
+  return {
+    provinsi: prov?.data?.name || "",
+    kota: kota?.data?.name || "",
+    kecamatan: kec?.data?.name || "",
+    kelurahan: kel?.data?.name || "",
+  };
+};

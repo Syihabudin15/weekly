@@ -302,7 +302,7 @@ export default function JenisManagementPage() {
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold text-gray-900">
-          Manajemen Jenis Pembiayaan{" "}
+          Jenis Pembiayaan{" "}
           <Layers size={28} className="inline-block text-blue-500" />
         </h1>
       </div>

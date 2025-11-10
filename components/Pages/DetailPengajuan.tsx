@@ -29,13 +29,17 @@ import {
 import dayjs from "dayjs";
 import {
   calculateWeeklyPayment,
+  convertWeeklyToMonthlyPayment,
   formatterRupiah,
   getUsiaMasuk,
   STATUS_MAP,
   STATUSKAWIN_MAP,
+  usePermission,
 } from "../Util";
 import { IDapem } from "../Interface";
 import { useSession } from "next-auth/react";
+import { Eye } from "lucide-react";
+import { ViewBerkas } from "./PrintAkad";
 
 const { Title, Text } = Typography;
 const { TextArea } = Input; // Tambahkan import Input.TextArea
@@ -51,14 +55,11 @@ const getFileIcon = (mimeType) => {
   return <PaperClipOutlined className="text-gray-500" />;
 };
 
-const BerkasPendukungTab = ({ files }) => {
-  const handleDownload = (fileName) => {
-    notification.success({
-      message: "Mengunduh Berkas",
-      description: `Mendownload ${fileName} (simulasi).`,
-    });
-  };
-
+const BerkasPendukungTab = ({
+  files,
+}: {
+  files: { name: string; type: string; url: string; date: Date }[];
+}) => {
   return (
     <List
       header={
@@ -71,27 +72,23 @@ const BerkasPendukungTab = ({ files }) => {
       renderItem={(item: any) => (
         <List.Item
           actions={[
-            <Text className="text-gray-500 text-sm" key="date">
-              {dayjs(item.date).format("DD/MM/YYYY")}
-            </Text>,
             <Button
               type="link"
               icon={<DownloadOutlined />}
               key="download"
-              onClick={() => handleDownload(item.name)}
-            >
-              Unduh
-            </Button>,
+              href={item.url}
+            ></Button>,
+            <Button
+              type="primary"
+              icon={<Eye size={12} />}
+              onClick={() => ViewBerkas(item.name, item.url)}
+              size="small"
+            ></Button>,
           ]}
         >
           <List.Item.Meta
             avatar={getFileIcon(item.type)}
             title={<Text className="font-medium">{item.name}</Text>}
-            description={
-              <Tag color="green" icon={<CheckCircleOutlined />}>
-                {item.status}
-              </Tag>
-            }
           />
         </List.Item>
       )}
@@ -104,6 +101,7 @@ const BerkasPendukungTab = ({ files }) => {
 const ApplicationDetailView = ({ dapem }: { dapem: IDapem }) => {
   const [loading, setLoading] = useState(false);
   const { data: session } = useSession();
+  const { canProses } = usePermission();
 
   const updateApplicationStatus = async (newStatus, reason) => {
     setLoading(true);
@@ -126,6 +124,7 @@ const ApplicationDetailView = ({ dapem }: { dapem: IDapem }) => {
                 : "Pengajuan Ditolak",
             description: `Status aplikasi #${dapem.id} berhasil diubah menjadi ${STATUS_MAP[newStatus].text}.`,
           });
+          window.location.href = "/monitoring";
         } else {
           notification.error({
             message: "Gagal",
@@ -274,6 +273,29 @@ const ApplicationDetailView = ({ dapem }: { dapem: IDapem }) => {
             calculateWeeklyPayment(dapem.plafon, dapem.margin, dapem.tenor)
           )}
         </Descriptions.Item>
+        <Descriptions.Item label="Debt Service Ratio">
+          {(() => {
+            const weeklyPayment = parseInt(
+              calculateWeeklyPayment(
+                dapem.plafon,
+                dapem.margin,
+                dapem.tenor
+              ).toFixed(0)
+            );
+            const monthlyDebtPayment =
+              convertWeeklyToMonthlyPayment(weeklyPayment);
+
+            // DSR = (Angsuran Bulanan / Pendapatan Bulanan) * 100
+            const calculatedDsr = (monthlyDebtPayment / dapem.salary) * 100;
+
+            const dsrValidationPassed = calculatedDsr <= dapem.dsr;
+            return (
+              <Tag color={dsrValidationPassed ? "green" : "red"}>
+                {calculatedDsr} %{" "}
+              </Tag>
+            );
+          })()}
+        </Descriptions.Item>
         <Descriptions.Item label="Status Pengajuan">
           <Tag color={STATUS_MAP[dapem.status_sub]?.color || "default"}>
             {STATUS_MAP[dapem.status_sub]?.text || "TIDAK DIKENAL"}
@@ -293,8 +315,10 @@ const ApplicationDetailView = ({ dapem }: { dapem: IDapem }) => {
           </span>
         }
       >
-        <Descriptions.Item label="Jenis">{dapem.Jenis.name}</Descriptions.Item>
-        <Descriptions.Item label="Produk">
+        <Descriptions.Item label="Jenis Pembiayaan">
+          {dapem.Jenis.name}
+        </Descriptions.Item>
+        <Descriptions.Item label="Produk Pembiayaan">
           {dapem.Produk.name}
         </Descriptions.Item>
 
@@ -315,6 +339,23 @@ const ApplicationDetailView = ({ dapem }: { dapem: IDapem }) => {
 
         {/* Asumsi Biaya Tatalaksana tidak ditampilkan karena 0.5% (dihitung) */}
       </Descriptions>
+
+      <div className="my-2"></div>
+      {/* Jaminan */}
+      <Descriptions
+        bordered
+        column={1}
+        size="middle"
+        labelStyle={{ width: "50%" }}
+        title={<span className="font-semibold text-base">Data Jaminan</span>}
+      >
+        {dapem.Jaminan.map((j) => (
+          <Descriptions.Item label={j.name} key={j.id}>
+            {formatterRupiah(j.taksiran)}
+          </Descriptions.Item>
+        ))}
+      </Descriptions>
+
       <div className="my-2"></div>
       {/* 3. Data Approval & Keterangan */}
       <Descriptions
@@ -410,20 +451,18 @@ const ApplicationDetailView = ({ dapem }: { dapem: IDapem }) => {
           labelStyle={{ width: "50%" }}
           size="middle"
           title={
-            <span className="font-semibold text-base">
-              Pekerjaan & Finansial
-            </span>
+            <span className="font-semibold text-base">Usaha & Finansial</span>
           }
         >
-          <Descriptions.Item label="Pekerjaan">
+          <Descriptions.Item label="Jenis Usaha">
             {dapem.DataDebitur.pekerjaan}
           </Descriptions.Item>
-          <Descriptions.Item label="Gaji Pokok">
+          <Descriptions.Item label="Pendapatan">
             <Text className="font-medium text-green-600">
               {formatterRupiah(dapem.DataDebitur.salary)}
             </Text>
           </Descriptions.Item>
-          <Descriptions.Item label="Alamat Pekerjaan" span={3}>
+          <Descriptions.Item label="Alamat Usaha" span={3}>
             {dapem.DataDebitur.alamat_pekerjaan}
           </Descriptions.Item>
         </Descriptions>
@@ -487,7 +526,36 @@ const ApplicationDetailView = ({ dapem }: { dapem: IDapem }) => {
       ),
       children: (
         <div className="p-4 bg-white rounded-lg">
-          {/* <BerkasPendukungTab files={files} /> */}
+          <BerkasPendukungTab
+            files={[
+              {
+                name: "File Permohonan",
+                type: "pdf",
+                url: dapem.file_permohonan || "",
+                date: new Date(),
+              },
+              ...(dapem.file_akad
+                ? [
+                    {
+                      name: "File Akad",
+                      type: "pdf",
+                      url: dapem.file_akad,
+                      date: new Date(),
+                    },
+                  ]
+                : []),
+              ...(dapem.file_pencairan
+                ? [
+                    {
+                      name: "File Pencairan",
+                      type: "pdf",
+                      url: dapem.file_pencairan,
+                      date: new Date(),
+                    },
+                  ]
+                : []),
+            ]}
+          />
         </div>
       ),
     },
@@ -508,7 +576,7 @@ const ApplicationDetailView = ({ dapem }: { dapem: IDapem }) => {
           </Text>
         </Col>
         {/* --- Tombol Aksi untuk Persetujuan/Penolakan --- */}
-        {isPending && (
+        {isPending && canProses("/monitoring") && (
           <Col>
             <Button
               type="primary"

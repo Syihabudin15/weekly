@@ -23,6 +23,7 @@ import {
   FileBadge2,
   Key,
   Receipt,
+  CircleDollarSignIcon,
 } from "lucide-react";
 import "@ant-design/v5-patch-for-react-19";
 import { IPermission } from "./Interface";
@@ -60,17 +61,23 @@ export const menuItems: MenuItem[] = [
     icon: FileBadge2,
     requiredPermission: "/pengajuan",
   },
-  {
-    path: "/lunas",
-    name: "Debitur Lunas",
-    icon: Receipt,
-    requiredPermission: "/lunas",
-  },
+  // {
+  //   path: "/lunas",
+  //   name: "Debitur Lunas",
+  //   icon: Receipt,
+  //   requiredPermission: "/lunas",
+  // },
   {
     path: "/debitur",
     name: "Data Debitur",
     icon: Users,
     requiredPermission: "/debitur",
+  },
+  {
+    path: "/pelunasan",
+    name: "Data Pelunasan",
+    icon: CircleDollarSignIcon,
+    requiredPermission: "/pelunasan",
   },
   {
     path: "/tagihan",

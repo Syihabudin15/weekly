@@ -59,7 +59,7 @@ export default function RolesPage() {
         : { path: m.path, name: m.name }
     );
 
-  const accessTypes = ["read", "write", "update", "delete"];
+  const accessTypes = ["read", "write", "update", "delete", "proses"];
 
   useEffect(() => {
     const timeout = setTimeout(async () => {
@@ -399,7 +399,7 @@ export default function RolesPage() {
                     title: "NAMA MENU",
                     dataIndex: "name",
                     key: "name",
-                    width: "30%",
+                    width: "25%",
                     render: (text) => (
                       <span className="font-medium">{text}</span>
                     ),

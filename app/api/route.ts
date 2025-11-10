@@ -15,7 +15,12 @@ export async function GET() {
   try {
     // Ambil semua Dapem aktif beserta jadwal dan relasi
     const dApems = await prisma.dapem.findMany({
-      where: { status: true },
+      where: {
+        AND: [
+          { status: true, status_sub: "SETUJU" },
+          { status_sub: { not: "LUNAS" } },
+        ],
+      },
       include: {
         Produk: true,
         DataDebitur: true,

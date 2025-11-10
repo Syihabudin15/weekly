@@ -28,6 +28,8 @@ export const GET = async (req: NextRequest) => {
       CreatedBy: true,
       ApprovedBy: true,
       JadwalAngsuran: true,
+      Jaminan: true,
+      Petugas: true,
     },
   });
   const total = await prisma.dapem.count({
@@ -54,6 +56,8 @@ export const POST = async (req: NextRequest) => {
       JadwalAngsuran,
       CreatedBy,
       ApprovedBy,
+      Jaminan,
+      Petugas,
       ...saved
     } = data;
     const PNMID = await generateUniqueLoanId();
@@ -70,9 +74,17 @@ export const POST = async (req: NextRequest) => {
           data: { ...savedKel, dataDebiturId: saved.dataDebiturId },
         });
       }
-      await tx.dapem.create({
+      const dapem = await tx.dapem.create({
         data: { id: PNMID, ...saved },
       });
+      if (Jaminan) {
+        for (const jam of Jaminan) {
+          const { id: idJam, ...savedJam } = jam;
+          await tx.jaminan.create({
+            data: { ...savedJam, dapemId: dapem.id },
+          });
+        }
+      }
     });
     return ResponseServer(200, "OK");
   } catch (err) {
@@ -92,6 +104,8 @@ export const PUT = async (req: NextRequest) => {
       JadwalAngsuran,
       CreatedBy,
       ApprovedBy,
+      Jaminan,
+      Petugas,
       ...saved
     } = data;
     if (saved.status_sub === "SETUJU") {
@@ -120,10 +134,19 @@ export const PUT = async (req: NextRequest) => {
             data: { ...savedKel, dataDebiturId: idDeb },
           });
         }
-        await tx.dapem.update({
+        const dapem = await tx.dapem.update({
           where: { id },
           data: { ...saved, updated_at: new Date() },
         });
+        await tx.jaminan.deleteMany({ where: { dapemId: dapem.id } });
+        if (Jaminan) {
+          for (const jam of Jaminan) {
+            const { id, ...savedJam } = jam;
+            await tx.jaminan.create({
+              data: { ...savedJam, dapemId: dapem.id },
+            });
+          }
+        }
       });
     }
     return ResponseServer(200, "OK");
@@ -147,6 +170,8 @@ export const PATCH = async (req: NextRequest) => {
       ApprovedBy: true,
       CreatedBy: true,
       JadwalAngsuran: true,
+      Jaminan: true,
+      Petugas: true,
     },
   });
   if (!find) {

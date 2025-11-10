@@ -45,6 +45,15 @@ model Role {
   User       User[]
 }
 
+model Unit {
+  id   String @id @default(uuid())
+  name String @unique
+  code String
+
+  status Boolean @default(true)
+  users  User[]
+}
+
 model User {
   id       String  @id @default(uuid())
   name     String
@@ -61,6 +70,10 @@ model User {
   roleId        String
   DapemCreated  Dapem[]  @relation("CreatedBy")
   DapemApproved Dapem[]  @relation("ApprovedBy")
+  DapemPetugas  Dapem[]  @relation("Petugas")
+  Unit          Unit     @relation(fields: [unitId], references: [id])
+  unitId        String
+  dapems        Dapem[]
 }
 
 model Produk {
@@ -95,20 +108,23 @@ model Jenis {
 }
 
 model Dapem {
-  id             String           @id @default(uuid())
-  salary         Int
-  dsr            Float
-  tenor          Int
-  plafon         Int
-  by_admin       Float
-  by_tabungan    Int
-  by_materai     Int
-  by_tatalaksana Float
-  pelunasan      Int
-  margin         Float
-  description    String?          @db.Text
-  status_sub     EStatusPengajuan @default(DRAFT)
-  status_dev     Boolean          @default(false)
+  id              String           @id @default(uuid())
+  salary          Int
+  dsr             Float
+  tenor           Int
+  plafon          Int
+  by_admin        Float
+  by_tabungan     Int
+  by_materai      Int
+  by_tatalaksana  Float
+  pelunasan       Int
+  margin          Float
+  description     String?          @db.Text
+  status_sub      EStatusPengajuan @default(DRAFT)
+  status_dev      Boolean          @default(false)
+  file_permohonan String?
+  file_akad       String?
+  file_pencairan  String?
 
   status        Boolean     @default(true)
   created_at    DateTime    @default(now())
@@ -121,12 +137,18 @@ model Dapem {
   dataDebiturId String
   CreatedBy     User?       @relation("CreatedBy", fields: [createdById], references: [id])
   createdById   String?
+  Petugas       User?       @relation("Petugas", fields: [petugasId], references: [id])
+  petugasId     String?
 
   ApprovedBy     User?            @relation("ApprovedBy", fields: [approvedById], references: [id])
   approvedById   String?
   JadwalAngsuran JadwalAngsuran[]
   produkId       String
   jenisId        String
+  Pelunasan      Pelunasan[]
+  user           User?            @relation(fields: [userId], references: [id])
+  userId         String?
+  Jaminan        Jaminan[]
 }
 
 model DataDebitur {
@@ -148,11 +170,18 @@ model DataDebitur {
   jenis_kelamin    EGender
   pekerjaan        String
   alamat_pekerjaan String         @db.Text
-  description      String?        @db.Text
   files            String?        @db.Text
   status_kawin     EStatusKawin
   DataKeluarga     DataKeluarga[]
   Dapem            Dapem[]
+}
+
+model Jaminan {
+  id       String @id @default(uuid())
+  name     String
+  taksiran Int    @default(0)
+  Dapem    Dapem  @relation(fields: [dapemId], references: [id])
+  dapemId  String
 }
 
 model DataKeluarga {
@@ -177,4 +206,17 @@ model JadwalAngsuran {
 
   Dapem   Dapem  @relation(fields: [dapemId], references: [id])
   dapemId String
+}
+
+model Pelunasan {
+  id          String           @id @default(uuid())
+  description String?          @db.Text
+  file        String?
+  status_sub  EStatusPengajuan @default(PENDING)
+
+  created_at DateTime @default(now())
+  updated_at DateTime @default(now())
+  status     Boolean  @default(true)
+  Dapem      Dapem    @relation(fields: [dapemId], references: [id])
+  dapemId    String
 }
