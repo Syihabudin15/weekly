@@ -30,7 +30,7 @@ export const GET = async (req: NextRequest) => {
 export const POST = async (req: NextRequest) => {
   const data: User = await req.json();
   const { id, ...saved } = data;
-  data.password = await bcrypt.hash(data.password, 10);
+  saved.password = await bcrypt.hash(data.password, 10);
   await prisma.user.create({ data: saved });
 
   return ResponseServer(200, `Pengguna ${data.name} berhasil ditambahkan`);
