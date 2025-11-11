@@ -1,7 +1,7 @@
 // app/settings/page.tsx
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Form,
   Input,
@@ -21,6 +21,7 @@ import {
   Image as ImageIcon,
   UploadCloud,
 } from "lucide-react";
+import { User as TypeUser } from "@prisma/client";
 
 // Tipe data untuk form profile
 interface ProfileValues {
@@ -40,15 +41,28 @@ interface SecurityValues {
 // --- Komponen Tab Profil ---
 const ProfileSettings = () => {
   const [loading, setLoading] = useState(false);
+  const [data, setData] = useState<TypeUser | null>(null);
+  const [form] = Form.useForm();
+
+  const getData = async () => {
+    setLoading(true);
+    const req = await fetch("/api/profile");
+    const { data } = await req.json();
+    form.setFieldsValue(data);
+    setData(data);
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    (async () => {
+      await getData();
+    })();
+  }, []);
 
   const onFinish = (values: ProfileValues) => {
     setLoading(true);
-    // Simulasikan API call
-    setTimeout(() => {
-      message.success("Profil berhasil diperbarui!");
-      setLoading(false);
-      console.log("Update Profile:", values);
-    }, 1500);
+
+    setLoading(false);
   };
 
   return (
@@ -57,12 +71,7 @@ const ProfileSettings = () => {
         layout="horizontal"
         labelCol={{ span: 5 }}
         onFinish={onFinish}
-        initialValues={{
-          name: "John Doe",
-          email: "john.doe@example.com",
-          phone: "081234567890",
-          position: "Manager Kredit",
-        }}
+        form={form}
       >
         <div className="flex flex-col lg:flex-row gap-6">
           {/* Bagian Kiri: Avatar */}
@@ -84,7 +93,7 @@ const ProfileSettings = () => {
                 }
               }}
             >
-              <Button icon={<UploadCloud size={16} />} type="default">
+              <Button icon={<UploadCloud size={16} />} type="default" disabled>
                 Ubah Foto Profil
               </Button>
             </Upload>
@@ -92,6 +101,9 @@ const ProfileSettings = () => {
 
           {/* Bagian Kanan: Detail Form */}
           <div className="lg:w-3/4 space-y-4">
+            <Form.Item hidden name="id">
+              <Input placeholder="Masukkan nama lengkap" />
+            </Form.Item>
             <Form.Item
               name="name"
               label={
@@ -123,7 +135,7 @@ const ProfileSettings = () => {
             </Form.Item>
 
             <Form.Item
-              name="phone"
+              name="no_telepon"
               label={
                 <Space>
                   <Phone size={16} /> Nomor Telepon
@@ -137,7 +149,7 @@ const ProfileSettings = () => {
             </Form.Item>
 
             <Form.Item name="position" label="Jabatan">
-              <Input disabled />
+              <Input />
             </Form.Item>
 
             <Form.Item>
