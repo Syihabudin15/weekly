@@ -6,6 +6,9 @@ import bcrypt from "bcrypt";
 
 export const GET = async (req: NextRequest) => {
   const session = await getServerSession();
+  if (!session) {
+    return NextResponse.json({ msg: "Unauthorized" }, { status: 401 });
+  }
   const find = await prisma.user.findFirst({
     where: { id: session?.user.id },
   });
@@ -21,20 +24,24 @@ export const POST = async (req: NextRequest) => {
     });
     return NextResponse.json({ msg: "OK" }, { status: 200 });
   } catch (err) {
+    console.log(err);
     return NextResponse.json({ msg: "Internal Server Error" }, { status: 500 });
   }
 };
 
 export const PUT = async (req: NextRequest) => {
   const { id, password, newPassword } = await req.json();
+
   try {
-    const find = await prisma.user.findFirst({ where: { id } });
+    const find = await prisma.user.findFirst({
+      where: { id },
+    });
     if (!find)
       return NextResponse.json(
         { status: 404, msg: "Not found" },
         { status: 404 }
       );
-
+    console.log({ find });
     const verify = await bcrypt.compare(password, find.password);
     if (!verify)
       return NextResponse.json(
@@ -49,6 +56,7 @@ export const PUT = async (req: NextRequest) => {
     });
     return NextResponse.json({ msg: "OK" }, { status: 200 });
   } catch (err) {
+    console.log(err);
     return NextResponse.json({ msg: "Internal Server Error" }, { status: 500 });
   }
 };

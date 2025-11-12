@@ -133,9 +133,12 @@ export const calculateWeeklyPayment = (
   annualRate: number,
   tenorWeeks: number
 ): number => {
-  const totalMargin = principal * (annualRate / 100) * (tenorWeeks / 12 / 4);
-  const totalRepayment = principal + totalMargin;
-  const weeklyPayment = totalRepayment / tenorWeeks;
+  // const totalMargin = principal * (annualRate / 100) * (tenorWeeks / 12 / 4);
+  // const totalRepayment = principal + totalMargin;
+  // const weeklyPayment = totalRepayment / tenorWeeks;
+  const totalMargin = principal * (annualRate / 100);
+  const pokok = principal / tenorWeeks;
+  const weeklyPayment = pokok + totalMargin / tenorWeeks;
   const roundedPayment = Math.ceil(weeklyPayment / 1000) * 1000;
   return roundedPayment;
 };

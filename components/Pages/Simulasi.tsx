@@ -521,10 +521,8 @@ export default function CreditSimulationPage() {
                       Plafon Pinjaman
                     </Text>{" "}
                     <Title level={4} className="mb-0 mt-1 text-blue-700">
-                      {weeklyInstallment && form.getFieldValue("tenorWeeks")
-                        ? formatter(
-                            weeklyInstallment * form.getFieldValue("tenorWeeks")
-                          )
+                      {form.getFieldValue("plafon")
+                        ? formatter(form.getFieldValue("plafon"))
                         : "Rp 0"}
                     </Title>
                   </div>

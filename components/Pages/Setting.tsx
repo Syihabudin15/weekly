@@ -22,6 +22,7 @@ import {
   UploadCloud,
 } from "lucide-react";
 import { User as TypeUser } from "@prisma/client";
+import { useSession } from "next-auth/react";
 
 // Tipe data untuk form profile
 interface ProfileValues {
@@ -41,27 +42,20 @@ interface SecurityValues {
 // --- Komponen Tab Profil ---
 const ProfileSettings = () => {
   const [loading, setLoading] = useState(false);
-  const [data, setData] = useState<TypeUser | null>(null);
-  const [form] = Form.useForm();
+  const { data } = useSession();
 
-  const getData = async () => {
+  const onFinish = async (values: ProfileValues) => {
     setLoading(true);
-    const req = await fetch("/api/profile");
-    const { data } = await req.json();
-    form.setFieldsValue(data);
-    setData(data);
-    setLoading(false);
-  };
-
-  useEffect(() => {
-    (async () => {
-      await getData();
-    })();
-  }, []);
-
-  const onFinish = (values: ProfileValues) => {
-    setLoading(true);
-
+    const req = await fetch("/api/profile", {
+      method: "POST",
+      body: JSON.stringify(values),
+    });
+    if (!req.ok) {
+      const { msg } = await req.json();
+      message.error(msg);
+    } else {
+      message.success("Update profil berhasil");
+    }
     setLoading(false);
   };
 
@@ -71,7 +65,7 @@ const ProfileSettings = () => {
         layout="horizontal"
         labelCol={{ span: 5 }}
         onFinish={onFinish}
-        form={form}
+        initialValues={{ ...data?.user }}
       >
         <div className="flex flex-col lg:flex-row gap-6">
           {/* Bagian Kiri: Avatar */}
@@ -125,17 +119,16 @@ const ProfileSettings = () => {
               }
               rules={[
                 {
-                  required: true,
                   type: "email",
                   message: "Email tidak valid!",
                 },
               ]}
             >
-              <Input placeholder="Masukkan alamat email" disabled />
+              <Input placeholder="Masukkan alamat email" />
             </Form.Item>
 
             <Form.Item
-              name="no_telepon"
+              name="phone"
               label={
                 <Space>
                   <Phone size={16} /> Nomor Telepon
@@ -168,16 +161,21 @@ const ProfileSettings = () => {
 const SecuritySettings = () => {
   const [loading, setLoading] = useState(false);
   const [form] = Form.useForm<SecurityValues>();
+  const { data } = useSession();
 
-  const onFinish = (values: SecurityValues) => {
+  const onFinish = async (values: SecurityValues) => {
     setLoading(true);
-    // Simulasikan API call
-    setTimeout(() => {
-      message.success("Password berhasil diubah!");
-      setLoading(false);
-      form.resetFields();
-      console.log("Change Password:", values);
-    }, 1500);
+    const req = await fetch("/api/profile", {
+      method: "PUT",
+      body: JSON.stringify(values),
+    });
+    if (!req.ok) {
+      const { msg } = await req.json();
+      message.error(msg);
+    } else {
+      message.success("Update password berhasil");
+    }
+    setLoading(false);
   };
 
   return (
@@ -194,10 +192,21 @@ const SecuritySettings = () => {
         layout="horizontal"
         labelCol={{ span: 10 }}
         onFinish={onFinish}
+        initialValues={{ id: data?.user.id }}
         // className="max-w-xl"
       >
         <Form.Item
-          name="currentPassword"
+          name="id"
+          label="Password Saat Ini"
+          rules={[
+            { required: true, message: "Password saat ini wajib diisi!" },
+          ]}
+          hidden
+        >
+          <Input />
+        </Form.Item>
+        <Form.Item
+          name="password"
           label="Password Saat Ini"
           rules={[
             { required: true, message: "Password saat ini wajib diisi!" },
