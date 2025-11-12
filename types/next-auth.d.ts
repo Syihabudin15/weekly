@@ -7,8 +7,8 @@ declare module "next-auth" {
       id: string;
       username: string;
       position: string;
-      phone: string;
-      email: string;
+      phone: string | null;
+      email: string | null;
       roleId: string;
       roleName: string;
       permissions: string;
@@ -19,8 +19,8 @@ declare module "next-auth" {
     id: string;
     username: string;
     position: string;
-    phone: string;
-    email: string;
+    phone: string | null;
+    email: string | null;
     roleId: string;
     roleName: string;
     permissions: string;
@@ -32,8 +32,8 @@ declare module "next-auth/jwt" {
     id: string;
     username: string;
     position: string;
-    phone: string;
-    email: string;
+    phone: string | null;
+    email: string | null;
     roleId: string;
     roleName: string;
     permissions: string;
