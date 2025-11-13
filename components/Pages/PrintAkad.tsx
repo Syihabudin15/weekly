@@ -234,27 +234,27 @@ export const generateContractHtml = (record: IDapem) => {
               <div>${formatterRupiah(plafon)}</div>
             </div></li>
             <li><div class="flex gap-5">
-              <div class="w-56">a. Biaya Admin </div>
+              <div class="w-56">b. Biaya Admin </div>
               <div class="w-5">:</div>
               <div>${formatterRupiah(admin)}</div>
             </div></li>
             <li><div class="flex gap-5">
-              <div class="w-56">a. Biaya Tatalaksana </div>
+              <div class="w-56">c. Biaya Tatalaksana </div>
               <div class="w-5">:</div>
               <div>${formatterRupiah(tatalaksana)}</div>
               </div></li>
               <li><div class="flex gap-5">
-                <div class="w-56">a. Biaya Materai </div>
+                <div class="w-56">d. Biaya Materai </div>
                 <div class="w-5">:</div>
                 <div>${formatterRupiah(record.by_materai)}</div>
               </div></li>
             <li><div class="flex gap-5">
-              <div class="w-56">a. Keanggotaan </div>
+              <div class="w-56">e. Keanggotaan </div>
               <div class="w-5">:</div>
               <div>${formatterRupiah(record.by_tabungan)}</div>
             </div></li>
             <li><div class="flex gap-5">
-              <div class="w-56">a. Terima Bersih </div>
+              <div class="w-56">f. Terima Bersih </div>
               <div class="w-5">:</div>
               <div>${formatterRupiah(
                 plafon -

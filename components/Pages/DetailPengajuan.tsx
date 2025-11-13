@@ -104,7 +104,7 @@ const ApplicationDetailView = ({ dapem }: { dapem: IDapem }) => {
   const { data: session } = useSession();
   const { canProses } = usePermission();
 
-  const updateApplicationStatus = async (newStatus, reason) => {
+  const updateApplicationStatus = async (newStatus, reason, date) => {
     setLoading(true);
     await fetch("/api/dapem", {
       method: "PUT",
@@ -112,6 +112,7 @@ const ApplicationDetailView = ({ dapem }: { dapem: IDapem }) => {
         ...dapem,
         status_sub: newStatus,
         process_desc: reason,
+        process_date: date,
         approvedById: session?.user.id,
       }),
     })
@@ -154,6 +155,10 @@ const ApplicationDetailView = ({ dapem }: { dapem: IDapem }) => {
             Apakah Anda yakin ingin **MENYETUJUI** pembiayaan ini? Anda bisa
             menambahkan catatan opsional di bawah ini.
           </p>
+          <p>Tanggal Akan Dicarikan :</p>
+          <Input type="date" id="date" />
+          <div className="my-2"></div>
+          <p>Keterangan</p>
           <TextArea
             rows={3}
             placeholder="Catatan persetujuan (Opsional)"
@@ -165,10 +170,13 @@ const ApplicationDetailView = ({ dapem }: { dapem: IDapem }) => {
       cancelText: "Batal",
       onOk() {
         const reasonElement: any = document.getElementById("approvalReason");
+        const dateElement: any = document.getElementById("date");
         const reason = reasonElement ? reasonElement.value.trim() : "";
+        const date = dateElement ? dateElement.value : new Date();
         updateApplicationStatus(
           "SETUJU",
-          reason || "Pengajuan disetujui tanpa catatan tambahan."
+          reason || "Pengajuan disetujui tanpa catatan tambahan.",
+          date
         );
       },
     });
@@ -208,7 +216,7 @@ const ApplicationDetailView = ({ dapem }: { dapem: IDapem }) => {
           return Promise.reject(new Error("Alasan wajib diisi"));
         }
         // Pass alasan ke fungsi update status
-        updateApplicationStatus("TOLAK", reasonInput.trim());
+        updateApplicationStatus("TOLAK", reasonInput.trim(), new Date());
       },
     });
   };

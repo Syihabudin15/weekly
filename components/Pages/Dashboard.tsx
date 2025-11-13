@@ -240,7 +240,7 @@ export default function FinancingMonitoringDashboard() {
 
       {/* Row 1: KPI Cards - 3 Columns (Plafon, Outstanding, Tertagih) */}
       <Row gutter={[16, 16]}>
-        <Col xs={24} md={8}>
+        <Col xs={12} md={6}>
           <KpiCard
             title="Total Pencairan (Plafon)"
             value={kpis.totalPlafon}
@@ -248,15 +248,23 @@ export default function FinancingMonitoringDashboard() {
             color="#059669" // Emerald
           />
         </Col>
-        <Col xs={24} md={8}>
+        <Col xs={12} md={6}>
           <KpiCard
-            title="Total Outstanding"
+            title="Total Outstanding (Pokok)"
             value={kpis.totalOutstanding}
             icon={<TrendingUp size={20} />}
             color="#f59e0b" // Amber
           />
         </Col>
-        <Col xs={24} md={8}>
+        <Col xs={12} md={6}>
+          <KpiCard
+            title="Total Outstanding (Pokok+Bunga)"
+            value={kpis.totalAngsuran}
+            icon={<TrendingUp size={20} />}
+            color="#f59e0b" // Amber
+          />
+        </Col>
+        <Col xs={12} md={6}>
           <KpiCard
             title="Total Nominal Tertagih"
             value={kpis.totalBilled}
@@ -264,11 +272,24 @@ export default function FinancingMonitoringDashboard() {
             color="#2563eb" // Blue
           />
         </Col>
-      </Row>
-
-      {/* Row 2: Remaining KPIs - 3 Columns (NPL Rate, NPL Nominal, Debitur) */}
-      <Row gutter={[16, 16]}>
-        <Col xs={24} md={8}>
+        <Col xs={12} md={6}>
+          <KpiCard
+            title="Tagihan/Minggu"
+            value={kpis.totalAngsuranPerMinggu}
+            icon={<CreditCard size={20} />}
+            color="#2563eb" // Blue
+          />
+        </Col>
+        <Col xs={12} md={6}>
+          <KpiCard
+            title="Total Debitur Aktif"
+            value={kpis.totalDebitur}
+            icon={<Users size={20} />}
+            unit="Orang"
+            color="#6366f1" // Indigo
+          />
+        </Col>
+        <Col xs={12} md={6}>
           <KpiCard
             title="Rasio NPL (Non-Performing)"
             value={kpis.nplRate}
@@ -277,21 +298,12 @@ export default function FinancingMonitoringDashboard() {
             color={kpis.nplRate > 3 ? "#ef4444" : "#059669"} // Red if > 3%
           />
         </Col>
-        <Col xs={24} md={8}>
+        <Col xs={12} md={6}>
           <KpiCard
             title="Nominal NPL (Outstanding)"
             value={kpis.nominalNPL}
             icon={<AlertTriangle size={20} />}
             color="#b91c1c" // Darker Red
-          />
-        </Col>
-        <Col xs={24} md={8}>
-          <KpiCard
-            title="Total Debitur Aktif"
-            value={kpis.totalDebitur}
-            icon={<Users size={20} />}
-            unit="Orang"
-            color="#6366f1" // Indigo
           />
         </Col>
       </Row>

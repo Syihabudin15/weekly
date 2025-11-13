@@ -55,12 +55,12 @@ export function generateJadwalAngsuran(dapem: IDapem) {
       jadwal_bayar: moment(dapem.process_date || new Date())
         .add(i, "week")
         .toDate(),
-      tanggal_bayar: null,
+      tanggal_bayar: i === 0 ? dapem.process_date : null,
       angsuran_ke: i + 1,
       pokok: pokok,
       margin: angsuran - pokok,
-      keterangan: null,
-      status_kunjungan: "BELUM",
+      keterangan: i === 0 ? "Blokir Angsuran" : null,
+      status_kunjungan: i === 0 ? "SUDAH" : "BELUM",
       file: null,
       dapemId: dapem.id,
     });

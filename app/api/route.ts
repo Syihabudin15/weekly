@@ -1,6 +1,7 @@
 import prisma from "@/components/Prisma";
 import { NextResponse } from "next/server";
 import dayjs from "dayjs";
+import { calculateWeeklyPayment } from "@/components/Util";
 
 type KpisResp = {
   totalPlafon: number;
@@ -9,6 +10,8 @@ type KpisResp = {
   totalBilled: number;
   nplRate: number; // percent
   nominalNPL: number;
+  totalAngsuranPerMinggu: number;
+  totalAngsuran: number;
 };
 
 export async function GET() {
@@ -30,6 +33,11 @@ export async function GET() {
 
     // Kalkulasi dasar
     const totalPlafon = dApems.reduce((s, d) => s + (d.plafon ?? 0), 0);
+    const totalAngsuran = dApems.reduce(
+      (s, d) =>
+        s + calculateWeeklyPayment(d.plafon, d.margin, d.tenor) * d.tenor,
+      0
+    );
 
     // totalBilled: jumlah pokok+margin pada jadwal yang sudah dibayar
     let totalBilled = 0;
@@ -78,6 +86,10 @@ export async function GET() {
       installmentNumber: number;
       installmentNominal: number | null;
     }> = [];
+    // Tentukan rentang minggu ini
+    const startOfWeek = now.startOf("week");
+    const endOfWeek = now.endOf("week");
+    let totalWeeklyInstallment = 0;
 
     // Iterate each Dapem to compute billed/outstanding and overdue info
     for (const d of dApems) {
@@ -107,6 +119,18 @@ export async function GET() {
           if (days > maxOverdue) maxOverdue = days;
         }
       }
+
+      // Jadwal minggu ini
+      const weeklySchedules = d.JadwalAngsuran.filter((j) => {
+        if (!j.jadwal_bayar) return false;
+        const jb = dayjs(j.jadwal_bayar);
+        return jb.isAfter(startOfWeek) && jb.isBefore(endOfWeek);
+      });
+      const weeklySum = weeklySchedules.reduce(
+        (s, j) => s + (j.pokok ?? 0) + (j.margin ?? 0),
+        0
+      );
+      totalWeeklyInstallment += weeklySum;
 
       // next unpaid installment (first in unpaidSchedules)
       if (unpaidSchedules.length > 0) {
@@ -201,9 +225,11 @@ export async function GET() {
         totalPlafon,
         totalDebitur: dApems.length,
         totalOutstanding,
+        totalAngsuran: totalAngsuran - totalBilled,
         totalBilled,
         nplRate: Number(nplRate.toFixed(2)),
         nominalNPL,
+        totalAngsuranPerMinggu: totalWeeklyInstallment,
       } as KpisResp,
       productDistribution,
       agingData,
