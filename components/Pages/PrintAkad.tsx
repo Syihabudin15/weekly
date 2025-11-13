@@ -249,7 +249,7 @@ export const generateContractHtml = (record: IDapem) => {
                 <div>${formatterRupiah(record.by_materai)}</div>
               </div></li>
             <li><div class="flex gap-5">
-              <div class="w-56">a. Tabungan </div>
+              <div class="w-56">a. Keanggotaan </div>
               <div class="w-5">:</div>
               <div>${formatterRupiah(record.by_tabungan)}</div>
             </div></li>

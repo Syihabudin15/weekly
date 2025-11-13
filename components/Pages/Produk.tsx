@@ -299,7 +299,7 @@ const ProdukManagementForm: React.FC<ProdukFormProps> = ({
           <Col xs={12} lg={6}>
             <Form.Item
               name="by_tabungan"
-              label="Tabungan (Rp)"
+              label="Keanggotaan (Rp)"
               rules={[{ required: true }]}
             >
               <InputNumber<number>

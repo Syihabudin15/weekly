@@ -1291,7 +1291,7 @@ export default function UpsertPengajuan({
                     name="by_tabungan"
                     label={
                       <Space>
-                        <DollarSign size={16} /> Tabungan (Rp)
+                        <DollarSign size={16} /> Keanggotaan (Rp)
                       </Space>
                     }
                     rules={[
@@ -1537,7 +1537,7 @@ export default function UpsertPengajuan({
                       <Text>- {formatterRupiah(results.byTatalaksana)}</Text>
                     </div>
                     <div className="flex justify-between text-red-600">
-                      <Text>Biaya Tabungan:</Text>
+                      <Text>Biaya Keanggotaan:</Text>
                       <Text>- {formatterRupiah(results.byTabungan)}</Text>
                     </div>
                     <div className="flex justify-between text-red-600">

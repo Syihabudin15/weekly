@@ -48,15 +48,15 @@ export function generateJadwalAngsuran(dapem: IDapem) {
   );
   const pokok = dapem.plafon / dapem.tenor;
 
-  for (let i = 1; i <= dapem.tenor; i++) {
-    const id = generateNoTrx("INV", dapem.id, i);
+  for (let i = 0; i < dapem.tenor; i++) {
+    const id = generateNoTrx("INV", dapem.id, i + 1);
     jadwals.push({
       id,
       jadwal_bayar: moment(dapem.process_date || new Date())
         .add(i, "week")
         .toDate(),
       tanggal_bayar: null,
-      angsuran_ke: i,
+      angsuran_ke: i + 1,
       pokok: pokok,
       margin: angsuran - pokok,
       keterangan: null,

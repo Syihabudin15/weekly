@@ -609,7 +609,7 @@ export default function CreditSimulationPage() {
                     <Text>- {formatter(results.byTatalaksana)}</Text>
                   </div>
                   <div className="flex justify-between text-red-600">
-                    <Text>Biaya Tabungan:</Text>
+                    <Text>Biaya Keanggotaan:</Text>
                     <Text>- {formatter(results.byTabungan)}</Text>
                   </div>
                   <div className="flex justify-between text-red-600">

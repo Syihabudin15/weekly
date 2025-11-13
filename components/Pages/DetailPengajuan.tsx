@@ -331,7 +331,7 @@ const ApplicationDetailView = ({ dapem }: { dapem: IDapem }) => {
         <Descriptions.Item label="Biaya Tatalaksana">
           {formatterRupiah(dapem.plafon * (dapem.by_tatalaksana / 100))}
         </Descriptions.Item>
-        <Descriptions.Item label="Biaya Tabungan">
+        <Descriptions.Item label="Biaya Keanggotaan">
           {formatterRupiah(dapem.by_tabungan)}
         </Descriptions.Item>
         <Descriptions.Item label="Biaya Materai">
