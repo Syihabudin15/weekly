@@ -144,8 +144,8 @@ const ApplicationStatusMonitoring = () => {
       },
       {
         title: "Tgl. Pengajuan",
-        dataIndex: "createdAt",
-        key: "createdAt",
+        dataIndex: "created_at",
+        key: "created_at",
         render: (date) => (
           <Tooltip title={dayjs(date).format("DD MMMM YYYY HH:mm")}>
             {dayjs(date).format("DD/MM/YYYY")}
