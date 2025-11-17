@@ -250,16 +250,8 @@ export default function FinancingMonitoringDashboard() {
         </Col>
         <Col xs={12} md={6}>
           <KpiCard
-            title="Total Outstanding (Pokok)"
+            title="Total Outstanding"
             value={kpis.totalOutstanding}
-            icon={<TrendingUp size={20} />}
-            color="#f59e0b" // Amber
-          />
-        </Col>
-        <Col xs={12} md={6}>
-          <KpiCard
-            title="Total Outstanding (Pokok+Bunga)"
-            value={kpis.totalAngsuran}
             icon={<TrendingUp size={20} />}
             color="#f59e0b" // Amber
           />

@@ -152,7 +152,7 @@ const ApplicationStatusMonitoring = () => {
           </Tooltip>
         ),
         sorter: (a, b) => a.created_at.getTime() - b.created_at.getTime(),
-        width: 120,
+        width: 130,
       },
       {
         title: "Aksi",
@@ -218,11 +218,11 @@ const ApplicationStatusMonitoring = () => {
       <Spin spinning={pageProps.loading} tip="Memuat data status...">
         <Card
           className="shadow-md rounded-lg"
-          style={{ padding: 0, margin: 0 }}
+          style={{ padding: 1, margin: 1 }}
         >
           <div className="p-2">
             <Input
-              placeholder="Cari Nama Jenis..."
+              placeholder="Cari ID/Nama Debitur..."
               prefix={<Search size={14} />}
               style={{ width: 170 }}
               onChange={(e) => {
@@ -254,6 +254,48 @@ const ApplicationStatusMonitoring = () => {
             size="middle"
             loading={pageProps.loading}
             rowKey={"id"}
+            summary={(pageData) => {
+              const totalPlafon = pageData.reduce(
+                (sum, record) => sum + record.plafon,
+                0
+              );
+              const totalAngsuran = pageData.reduce((sum, record) => {
+                const installl = calculateWeeklyPayment(
+                  record.plafon,
+                  record.margin,
+                  record.tenor
+                );
+                return sum + installl;
+              }, 0);
+
+              return (
+                <Table.Summary fixed>
+                  <Table.Summary.Row
+                    // 1. Latar Belakang abu-abu, teks lebih kecil, dan tebal
+                    className="bg-gray-100 text-xs font-semibold text-blue-500"
+                  >
+                    {/* Kolom Pertama (ID Pengajuan) */}
+                    <Table.Summary.Cell index={0}>TOTAL</Table.Summary.Cell>
+                    {/* Kolom Kedua (Nama Debitur) */}
+                    <Table.Summary.Cell index={1} />
+                    {/* Kolom Ketiga (Plafon) */}
+                    <Table.Summary.Cell index={2}>
+                      {formatterRupiah(totalPlafon)}
+                    </Table.Summary.Cell>
+                    {/* Kolom Keempat (Tenor) */}
+                    <Table.Summary.Cell index={3} />
+                    {/* Kolom Kelima (Angsuran) */}
+                    <Table.Summary.Cell index={4}>
+                      {formatterRupiah(totalAngsuran)}
+                    </Table.Summary.Cell>
+                    {/* Sisa Kolom */}
+                    <Table.Summary.Cell index={5} />
+                    <Table.Summary.Cell index={6} />
+                    <Table.Summary.Cell index={7} />
+                  </Table.Summary.Row>
+                </Table.Summary>
+              );
+            }}
           />
         </Card>
       </Spin>

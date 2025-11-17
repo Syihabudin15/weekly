@@ -31,6 +31,9 @@ export const GET = async (req: NextRequest) => {
       Jaminan: true,
       Petugas: true,
     },
+    orderBy: {
+      created_at: "desc",
+    },
   });
   const total = await prisma.dapem.count({
     where: {

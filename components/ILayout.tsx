@@ -274,52 +274,11 @@ export default function MainLayout({
             </div>
           ))}
         </nav>
-
-        {/* Footer/User Info & Logout */}
-        {/* <div
-          className={`
-            absolute bottom-0 border-t border-blue-800 p-3 
-            ${
-              sidebarOpen
-                ? "w-64 flex justify-between items-center"
-                : "w-16 hidden lg:flex justify-center flex-col items-center"
-            }
-          `}
-        >
-          {sidebarOpen ? (
-            <>
-              <div>
-                <p className="text-sm font-semibold">{session?.user?.name}</p>
-                <p className="text-xs text-blue-300">
-                  {session?.user?.position}
-                </p>
-              </div>
-              <button
-                onClick={handleLogout}
-                className="flex items-center gap-2 rounded-lg p-2 hover:bg-red-600 transition-colors text-xs cursor-pointer"
-                title="Logout"
-              >
-                <LogOut size={15} />
-                <span>Logout</span>
-              </button>
-            </>
-          ) : (
-            <button
-              onClick={handleLogout}
-              className="rounded-full p-2 hover:bg-red-600 transition-colors text-white"
-              title="Logout"
-            >
-              <LogOut size={20} />
-            </button>
-          )}
-        </div> */}
       </aside>
 
       {/* Main Content */}
       <div
         className={`transition-all duration-300 min-h-screen ${
-          // Mobile: w-0 saat terbuka (ditutupi overlay)
-          // Desktop (lg): w-64 saat terbuka penuh, w-16 saat tertutup
           sidebarOpen ? "lg:ml-64 ml-0" : "lg:ml-16 ml-0"
         }`}
       >

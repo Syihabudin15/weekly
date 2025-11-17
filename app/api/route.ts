@@ -19,10 +19,7 @@ export async function GET() {
     // Ambil semua Dapem aktif beserta jadwal dan relasi
     const dApems = await prisma.dapem.findMany({
       where: {
-        AND: [
-          { status: true, status_sub: "SETUJU" },
-          { status_sub: { not: "LUNAS" } },
-        ],
+        AND: [{ status: true, status_sub: "SETUJU" }],
       },
       include: {
         Produk: true,
@@ -33,7 +30,7 @@ export async function GET() {
 
     // Kalkulasi dasar
     const totalPlafon = dApems.reduce((s, d) => s + (d.plafon ?? 0), 0);
-    const totalAngsuran = dApems.reduce(
+    const totalOs = dApems.reduce(
       (s, d) =>
         s + calculateWeeklyPayment(d.plafon, d.margin, d.tenor) * d.tenor,
       0
@@ -168,7 +165,7 @@ export async function GET() {
       }
     }
 
-    const totalOutstanding = Math.max(0, totalPlafon - totalBilled);
+    const totalOutstanding = totalOs - totalBilled;
 
     // NPL: Dapem with any overdue > 90 days
     const nplDebtors = problemList.filter((p) => p.overdueDays > 90);
@@ -225,7 +222,6 @@ export async function GET() {
         totalPlafon,
         totalDebitur: dApems.length,
         totalOutstanding,
-        totalAngsuran: totalAngsuran - totalBilled,
         totalBilled,
         nplRate: Number(nplRate.toFixed(2)),
         nominalNPL,
