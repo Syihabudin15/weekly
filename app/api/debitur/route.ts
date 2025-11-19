@@ -19,6 +19,7 @@ export const GET = async (req: NextRequest) => {
       include: {
         Dapem: {
           orderBy: { process_date: "desc" },
+          where: { OR: [{ status_sub: "SETUJU" }, { status_sub: "LUNAS" }] },
           include: {
             JadwalAngsuran: true, // kalau mau hitung angsuran mingguan
           },

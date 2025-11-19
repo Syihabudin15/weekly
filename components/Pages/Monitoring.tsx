@@ -218,7 +218,7 @@ const ApplicationStatusMonitoring = () => {
       <Spin spinning={pageProps.loading} tip="Memuat data status...">
         <Card
           className="shadow-md rounded-lg"
-          style={{ padding: 1, margin: 1 }}
+          styles={{ body: { padding: 5 } }}
         >
           <div className="p-2">
             <Input

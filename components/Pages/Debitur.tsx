@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Card, Typography, Space, Table, Tag, TableProps } from "antd";
-import { Users, TrendingUp, X, Check, Clock } from "lucide-react";
+import { Users, Clock } from "lucide-react";
 import dayjs from "dayjs";
 import { calculateWeeklyPayment, formatterRupiah } from "../Util";
 import { IDapem, IDebitur, IPageProps } from "../Interface";
@@ -51,6 +51,12 @@ export default function DebtorManagement() {
       render: (text: number) => <Text strong>{formatterRupiah(text)}</Text>,
     },
     {
+      title: "Tabungan",
+      dataIndex: "by_tabungan",
+      key: "by_tabungan",
+      render: (text: number) => <Text strong>{formatterRupiah(text)}</Text>,
+    },
+    {
       title: "Angsuran Mingguan",
       dataIndex: "weeklyInstallment",
       key: "weeklyInstallment",
@@ -92,6 +98,26 @@ export default function DebtorManagement() {
       dataIndex: "name",
       key: "name",
       width: 200,
+    },
+    {
+      title: "Total Plafon",
+      dataIndex: "plafon",
+      key: "plafon",
+      width: 200,
+      render(_, record) {
+        const total = record.Dapem.reduce((s, d) => s + d.plafon, 0);
+        return <Tag color="red">{formatterRupiah(total)}</Tag>;
+      },
+    },
+    {
+      title: "Total Tabungan",
+      dataIndex: "tabungan",
+      key: "tabungan",
+      width: 200,
+      render(_, record) {
+        const total = record.Dapem.reduce((s, d) => s + d.by_tabungan, 0);
+        return <Tag color="red">{formatterRupiah(total)}</Tag>;
+      },
     },
     {
       title: "Total Pengajuan",

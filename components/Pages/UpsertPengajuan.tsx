@@ -863,6 +863,7 @@ export default function UpsertPengajuan({
                         message.error(result.msg || "Gagal upload file");
                       }
                     } catch (err) {
+                      console.log(err);
                       message.error("Terjadi kesalahan saat upload file.");
                     }
 
@@ -887,6 +888,7 @@ export default function UpsertPengajuan({
                         }
                       }
                     } catch (err) {
+                      console.log(err);
                       message.error("Terjadi kesalahan saat menghapus file.");
                     }
 
@@ -946,6 +948,7 @@ export default function UpsertPengajuan({
                         message.error(result.msg || "Gagal upload file");
                       }
                     } catch (err) {
+                      console.log(err);
                       message.error("Terjadi kesalahan saat upload file.");
                     }
 
@@ -970,6 +973,7 @@ export default function UpsertPengajuan({
                         }
                       }
                     } catch (err) {
+                      console.log(err);
                       message.error("Terjadi kesalahan saat menghapus file.");
                     }
 
@@ -1028,6 +1032,7 @@ export default function UpsertPengajuan({
                         message.error(result.msg || "Gagal upload file");
                       }
                     } catch (err) {
+                      console.log(err);
                       message.error("Terjadi kesalahan saat upload file.");
                     }
 
@@ -1052,6 +1057,7 @@ export default function UpsertPengajuan({
                         }
                       }
                     } catch (err) {
+                      console.log(err);
                       message.error("Terjadi kesalahan saat menghapus file.");
                     }
 
