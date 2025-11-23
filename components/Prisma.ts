@@ -55,7 +55,8 @@ export function generateJadwalAngsuran(dapem: IDapem) {
       jadwal_bayar: moment(dapem.process_date || new Date())
         .add(i, "week")
         .toDate(),
-      tanggal_bayar: i === 0 ? dapem.process_date : null,
+      tanggal_bayar:
+        i === 0 ? moment(dapem.process_date || new Date()).toDate() : null,
       angsuran_ke: i + 1,
       pokok: pokok,
       margin: angsuran - pokok,

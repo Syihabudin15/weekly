@@ -36,6 +36,7 @@ import dayjs from "dayjs";
 import { formatterRupiah, usePermission } from "../Util";
 import { IPageProps, ITagihan } from "../Interface";
 import { EKunjungan } from "@prisma/client";
+import "dayjs/locale/id";
 
 const { Text } = Typography;
 const { Option } = Select;
@@ -45,6 +46,16 @@ interface AngsuranFormProps {
   editingAngsuran: ITagihan | null;
   getData: () => void;
 }
+const dayOptions = [
+  { label: "Semua Hari", value: "" },
+  { label: "Minggu", value: "minggu" },
+  { label: "Senin", value: "senin" },
+  { label: "Selasa", value: "selasa" },
+  { label: "Rabu", value: "rabu" },
+  { label: "Kamis", value: "kamis" },
+  { label: "Jumat", value: "jumat" },
+  { label: "Sabtu", value: "sabtu" },
+];
 
 const AngsuranUpdateForm: React.FC<AngsuranFormProps> = ({
   isModalVisible,
@@ -360,9 +371,11 @@ export default function AngsuranManagementPage() {
         pageProps.filters.find((f) => f.key === "search")?.value || "";
       const week =
         pageProps.filters.find((f) => f.key === "week")?.value || "current";
-
+      const day = pageProps.filters.find((f) => f.key === "day")?.value || "";
       const response = await fetch(
-        `/api/tagihan?search=${encodeURIComponent(search)}&week=${week}`
+        `/api/tagihan?search=${encodeURIComponent(
+          search
+        )}&week=${week}&day=${day}`
       );
       const data = await response.json();
 
@@ -454,7 +467,21 @@ export default function AngsuranManagementPage() {
       align: "center",
       sorter: (a, b) =>
         new Date(a.jadwal_bayar).getTime() - new Date(b.jadwal_bayar).getTime(),
-      render: (date: string | Date) => dayjs(date).format("DD MMM YYYY"),
+      render: (date: string | Date) => {
+        // Pastikan dayjs diinisialisasi dengan locale("id") terlebih dahulu
+        const formattedDate = dayjs(date).locale("id");
+
+        // Ambil nama hari dalam Bahasa Indonesia (dddd)
+        const dayName = formattedDate.format("dddd");
+
+        // Ambil tanggal, bulan, dan tahun (DD MMM YYYY)
+        // Locale('id') juga akan memformat bulan ke Indonesia (misalnya, 'Nov' menjadi 'Nov'),
+        // tetapi untuk tanggal, bulan, tahun, format dasarnya sama.
+        const fullDate = formattedDate.format("DD MMM YYYY");
+
+        // Gabungkan keduanya
+        return `${dayName} ${fullDate}`;
+      },
     },
     {
       title: "Tanggal Bayar",
@@ -565,6 +592,18 @@ export default function AngsuranManagementPage() {
               size="small"
             />
             <Select
+              placeholder="Pilih Hari"
+              onChange={(val) => {
+                const filt = pageProps.filters.filter((f) => f.key !== "day");
+                filt.push({ key: "day", value: val });
+                setPageProps((prev) => ({ ...prev, filters: filt }));
+              }}
+              style={{ width: 150 }}
+              options={dayOptions}
+              size="small"
+              allowClear
+            />
+            <Select
               defaultValue="current"
               style={{ width: 160 }}
               size="small"
@@ -573,6 +612,7 @@ export default function AngsuranManagementPage() {
                 filt.push({ key: "week", value: val });
                 setPageProps((prev) => ({ ...prev, filters: filt }));
               }}
+              allowClear
             >
               <Option value="prev">Minggu Lalu</Option>
               <Option value="current">Minggu Ini</Option>

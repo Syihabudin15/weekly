@@ -25,6 +25,7 @@ export async function GET() {
         Produk: true,
         DataDebitur: true,
         JadwalAngsuran: true,
+        Petugas: true,
       },
     });
 
@@ -158,7 +159,7 @@ export async function GET() {
           customer: d.DataDebitur?.name ?? "—",
           plafon: d.plafon ?? 0,
           overdueDays: maxOverdue,
-          collector: null, // tidak ada field collector di schema
+          collector: d.Petugas?.name ?? null, // tidak ada field collector di schema
           installmentNumber: nextUnpaidInstallmentNumber,
           installmentNominal: nextUnpaidInstallmentNominal,
         });

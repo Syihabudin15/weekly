@@ -14,6 +14,7 @@ import {
   Table,
   Modal,
   Input,
+  InputNumber,
 } from "antd";
 import {
   FileTextOutlined,
@@ -104,7 +105,7 @@ const ApplicationDetailView = ({ dapem }: { dapem: IDapem }) => {
   const { data: session } = useSession();
   const { canProses } = usePermission();
 
-  const updateApplicationStatus = async (newStatus, reason, date) => {
+  const updateApplicationStatus = async (newStatus, reason, date, plafond) => {
     setLoading(true);
     await fetch("/api/dapem", {
       method: "PUT",
@@ -113,6 +114,7 @@ const ApplicationDetailView = ({ dapem }: { dapem: IDapem }) => {
         status_sub: newStatus,
         process_desc: reason,
         process_date: date,
+        plafon: plafond,
         approvedById: session?.user.id,
       }),
     })
@@ -158,6 +160,24 @@ const ApplicationDetailView = ({ dapem }: { dapem: IDapem }) => {
           <p>Tanggal Akan Dicarikan :</p>
           <Input type="date" id="date" />
           <div className="my-2"></div>
+          <p>Nominal yang disetujui :</p>
+          <InputNumber<number>
+            min={100000}
+            max={10000000}
+            step={100000}
+            formatter={formatterRupiah}
+            defaultValue={dapem.plafon}
+            parser={(displayValue) => {
+              const cleanValue = displayValue
+                ? displayValue.replace(/[^0-9]/g, "")
+                : "0";
+              return parseFloat(cleanValue) || 0;
+            }}
+            className="w-full"
+            style={{ width: "100%" }}
+            id="plafond"
+          />
+          <div className="my-2"></div>
           <p>Keterangan</p>
           <TextArea
             rows={3}
@@ -171,12 +191,19 @@ const ApplicationDetailView = ({ dapem }: { dapem: IDapem }) => {
       onOk() {
         const reasonElement: any = document.getElementById("approvalReason");
         const dateElement: any = document.getElementById("date");
+        const plafondElement: any = document.getElementById("plafond");
         const reason = reasonElement ? reasonElement.value.trim() : "";
         const date = dateElement ? dateElement.value : new Date();
+        const plafond = plafondElement ? plafondElement.value : dapem.plafon;
+        const cleanString = plafond.replace("Rp ", "").replace(/\./g, "");
+
+        // 2. Ubah string yang sudah bersih menjadi integer
+        const integerValue = parseInt(cleanString, 10);
         updateApplicationStatus(
           "SETUJU",
           reason || "Pengajuan disetujui tanpa catatan tambahan.",
-          date
+          date,
+          integerValue
         );
       },
     });
@@ -216,7 +243,12 @@ const ApplicationDetailView = ({ dapem }: { dapem: IDapem }) => {
           return Promise.reject(new Error("Alasan wajib diisi"));
         }
         // Pass alasan ke fungsi update status
-        updateApplicationStatus("TOLAK", reasonInput.trim(), new Date());
+        updateApplicationStatus(
+          "TOLAK",
+          reasonInput.trim(),
+          new Date(),
+          dapem.plafon
+        );
       },
     });
   };

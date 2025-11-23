@@ -264,8 +264,9 @@ export const generateContractHtml = (record: IDapem) => {
           </ol>
           </li>
           ${
-            record.description &&
-            `<li>PIHAK KEDUA menyatakan bahwa uang pinjaman tersebut akan digunakan untuk keperluan <em>${tujuan}</em>.</li>`
+            record.description
+              ? `<li>PIHAK KEDUA menyatakan bahwa uang pinjaman tersebut akan digunakan untuk keperluan <em>${tujuan}</em>.</li>`
+              : ""
           }
         </ol>
 

@@ -9,8 +9,11 @@ export const GET = async (req: NextRequest) => {
     const { searchParams } = new URL(req.url);
     const search = searchParams.get("search") || "";
     const weekFilter = searchParams.get("week") || "current";
+    // Tambahkan filter hari
+    const dayFilter = searchParams.get("day") || "";
+
     const today = dayjs();
-    let startOfWeek = today.startOf("week"); // default minggu ini
+    let startOfWeek = today.startOf("week"); // default minggu ini (tergantung locale Day.js, bisa Minggu atau Senin)
     let endOfWeek = today.endOf("week");
 
     if (weekFilter === "next") {
@@ -19,6 +22,27 @@ export const GET = async (req: NextRequest) => {
     } else if (weekFilter === "prev") {
       startOfWeek = today.subtract(1, "week").startOf("week");
       endOfWeek = today.subtract(1, "week").endOf("week");
+    }
+
+    // Tentukan day index untuk filter, Day.js default: 0=Minggu, 1=Senin, ..., 6=Sabtu
+    // Asumsi: client mengirim nilai index 0-6 atau nama hari yang cocok (misalnya 'senin')
+    let targetDayIndex: number | undefined;
+
+    // Contoh mapping nama hari ke index (sesuaikan dengan locale Day.js Anda)
+    // Jika Day.js Anda menggunakan locale Indonesia dan startOf('week') adalah Senin (index 1)
+    const dayMap = {
+      minggu: 0,
+      senin: 1,
+      selasa: 2,
+      rabu: 3,
+      kamis: 4,
+      jumat: 5,
+      sabtu: 6,
+    };
+    const normalizedDayFilter = dayFilter.toLowerCase();
+
+    if (normalizedDayFilter in dayMap) {
+      targetDayIndex = dayMap[normalizedDayFilter as keyof typeof dayMap];
     }
 
     const data = await prisma.jadwalAngsuran.findMany({
@@ -30,6 +54,17 @@ export const GET = async (req: NextRequest) => {
               lte: endOfWeek.toDate(),
             },
           },
+          // Tambahkan kondisi filter hari jika dayFilter ada
+          ...(targetDayIndex !== undefined
+            ? [
+                {
+                  // Gunakan raw query untuk filter hari karena Prisma tidak memiliki operator hari
+                  // Ini mungkin memerlukan setup Prisma yang mendukung `$queryRaw` atau `extensions`
+                  // Untuk solusi yang lebih mudah (tapi kurang efisien), kita akan filter setelah mengambil data,
+                  // NAMUN untuk query yang lebih baik, kita akan buat logika di bawah ini lebih fleksibel/mencari cara lain
+                },
+              ]
+            : []),
           {
             OR: [
               { Dapem: { DataDebitur: { name: { contains: search } } } },
@@ -40,18 +75,26 @@ export const GET = async (req: NextRequest) => {
       },
       include: {
         Dapem: {
-          include: {
-            DataDebitur: true,
-          },
+          include: { DataDebitur: true },
         },
       },
       orderBy: { jadwal_bayar: "asc" },
     });
 
-    const now = new Date();
+    // Karena filter hari sulit dilakukan langsung di query Prisma tanpa raw SQL,
+    // kita akan melakukan filter di sisi Node.js setelah data diambil dalam rentang minggu yang dipilih.
+    // **PERHATIAN: Untuk set data yang sangat besar, ini kurang efisien.**
+    const filteredByDay = dayFilter
+      ? data.filter((a) => {
+          const dayIndexOfJadwal = dayjs(a.jadwal_bayar).day(); // 0=Minggu, 1=Senin, ...
+          return dayIndexOfJadwal === targetDayIndex;
+        })
+      : data;
 
+    const now = new Date();
     // Tambahkan properti statusPembayaran secara dinamis
-    const formatted = data.map((a) => {
+    const formatted = filteredByDay.map((a) => {
+      // Gunakan filteredByDay
       let statusPembayaran: "LUNAS" | "BELUM LUNAS" | "TERLAMBAT" =
         "BELUM LUNAS";
       if (a.tanggal_bayar) {
@@ -64,7 +107,7 @@ export const GET = async (req: NextRequest) => {
 
     return NextResponse.json(formatted);
   } catch (error) {
-    console.error("GET /jadwal-angsuran error:", error);
+    console.error("GET /api/tagihan error:", error);
     return NextResponse.json(
       { msg: "Gagal mengambil data angsuran." },
       { status: 500 }
