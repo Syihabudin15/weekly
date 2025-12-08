@@ -250,6 +250,7 @@ const ApplicationStatusMonitoring = () => {
     await fetch("/api/laporan")
       .then((res) => res.json())
       .then((res) => {
+        console.log({ backdate });
         printLaporan(pageProps.data, res, backdate && backdate.value);
       });
     setLoadingLap(false);

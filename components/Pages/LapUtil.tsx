@@ -6,7 +6,7 @@ import { ILaporan } from "@/app/api/laporan/route";
 import "moment/locale/id";
 moment.locale("id");
 
-export const LapPermohonan = (data: IDapem[], backdate?: string) => {
+export const LapPermohonan = (data: IDapem[], backdate?: string[]) => {
   const totalPlafon = data
     .filter((d) => d.status_sub === "SETUJU")
     .reduce((sum, record) => sum + record.plafon, 0);
@@ -31,10 +31,10 @@ export const LapPermohonan = (data: IDapem[], backdate?: string) => {
   return `
     ${HeaderPage(
       "LAPORAN DATA PEMBIAYAAN",
-      backdate && backdate !== ","
-        ? `PERIODE ${moment(backdate.split(",")[0]).format(
-            "DD/MM/YYYY"
-          )} ${moment(backdate.split(",")[1]).format("DD/MM/YYYY")}- `
+      backdate && backdate.length === 2 && backdate[0]
+        ? `PERIODE ${moment(backdate[0]).format("DD/MM/YYYY")} ${moment(
+            backdate[1]
+          ).format("DD/MM/YYYY")}- `
         : "PERIODE TIDAK DIPILIH"
     )}
       
@@ -261,24 +261,24 @@ export const FullReport = (data: ILaporan) => {
             );
             return `
             <tr>
-              <td style="border: 1px solid #aaa; padding: 1px 3px;text-align: center;">${
+              <td style="border: 1px solid #aaa; padding: 1px 1px;text-align: center;">${
                 index + 1
               }</td>
-              <td style="border: 1px solid #aaa; padding: 1px 3px;">${
+              <td style="border: 1px solid #aaa; padding: 1px 1px;">${
                 a.DataDebitur.name
               }</td>
-              <td style="border: 1px solid #aaa; padding: 1px 3px;">
+              <td style="border: 1px solid #aaa; padding: 1px 1px;">
                 <p>${formatterRupiah(a.plafon)}</p>
               <p>${a.tenor} Minggu</p>
               </td>
-              <td style="border: 1px solid #aaa; padding: 1px 3px;">
+              <td style="border: 1px solid #aaa; padding: 1px 1px;">
                 <p>Total : ${formatterRupiah(angs)}</p>
                 <p>Pokok : ${formatterRupiah(a.plafon / a.tenor)}</p>
               </td>
-              <td style="border: 1px solid #aaa; padding: 1px 3px;">
+              <td style="border: 1px solid #aaa; padding: 1px 1px;">
                 ${tertagih.length}x (${formatterRupiah(angs * tertagih.length)})
               </td>
-              <td style="border: 1px solid #aaa; padding: 1px 3px;">
+              <td style="border: 1px solid #aaa; padding: 1px 1px;">
                 <p>${tunggakan.length} x (${formatterRupiah(
               angs * tunggakan.length
             )})</p>
@@ -291,7 +291,7 @@ export const FullReport = (data: ILaporan) => {
                   )
                   .join("")}
               </td>
-              <td style="border: 1px solid #aaa; padding: 1px 3px;">
+              <td style="border: 1px solid #aaa; padding: 1px 1px;">
                 <p>Total : ${(() => {
                   const total = angs * a.tenor;
                   const pot = angs * tertagih.length;
@@ -303,7 +303,7 @@ export const FullReport = (data: ILaporan) => {
                   return formatterRupiah(total - pot);
                 })()}</p>
               </td>
-              <td style="border: 1px solid #aaa; padding: 1px 3px;">${
+              <td style="border: 1px solid #aaa; padding: 1px 1px;">${
                 a.Petugas ? a.Petugas.name : "-"
               }</td>
             </tr>

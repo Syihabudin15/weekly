@@ -15,7 +15,7 @@ export const HeaderPage = (title?: string, subtitle?: any) => `
 const generateLaporan = (
   data: IDapem[],
   laporan: ILaporan,
-  backdate?: string
+  backdate?: string[]
 ) => {
   return `
     <!doctype html>
@@ -87,7 +87,7 @@ const generateLaporan = (
 export const printLaporan = (
   record: IDapem[],
   laporan: ILaporan,
-  backdate?: string
+  backdate?: string[]
 ) => {
   const htmlContent = generateLaporan(record, laporan, backdate);
 
