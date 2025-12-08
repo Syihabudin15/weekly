@@ -31,7 +31,7 @@ import {
   UploadCloud,
   Eye,
 } from "lucide-react";
-import type { TableProps } from "antd";
+import type { TableProps, UploadFile } from "antd";
 import dayjs from "dayjs";
 import { formatterRupiah, usePermission } from "../Util";
 import { IPageProps, ITagihan } from "../Interface";
@@ -96,6 +96,7 @@ const AngsuranUpdateForm: React.FC<AngsuranFormProps> = ({
     formData.append("id", editingAngsuran.id);
     formData.append("keterangan", values.keterangan || "");
     formData.append("status_kunjungan", values.status_kunjungan || "BELUM");
+    formData.append("file", values.file || "");
     formData.append(
       "tanggal_bayar",
       values.tanggal_bayar
@@ -104,9 +105,9 @@ const AngsuranUpdateForm: React.FC<AngsuranFormProps> = ({
     );
 
     // tambahkan file jika ada
-    if (fileList.length > 0 && fileList[0].originFileObj) {
-      formData.append("file", fileList[0].originFileObj);
-    }
+    // if (fileList.length > 0 && fileList[0].originFileObj) {
+    //   formData.append("file", fileList[0].originFileObj);
+    // }
 
     const url = `/api/tagihan?id=${editingAngsuran.id}`;
 
@@ -243,7 +244,7 @@ const AngsuranUpdateForm: React.FC<AngsuranFormProps> = ({
             <Option value="SUDAH">SUDAH</Option>
           </Select>
         </Form.Item>
-        <Form.Item label="Upload berkas">
+        {/* <Form.Item label="Upload berkas">
           {data?.file ? (
             <Card
               size="small"
@@ -343,6 +344,87 @@ const AngsuranUpdateForm: React.FC<AngsuranFormProps> = ({
               )}
             </Upload>
           )}
+        </Form.Item> */}
+        <Form.Item name="file" label="File Kunjungan">
+          <Upload
+            accept=".pdf"
+            maxCount={1}
+            fileList={fileList}
+            beforeUpload={async (file) => {
+              const formData = new FormData();
+              formData.append("file", file);
+              formData.append("field_name", "file_pencairan");
+
+              try {
+                const res = await fetch("/api/file", {
+                  method: "POST",
+                  body: formData,
+                });
+
+                const result = await res.json();
+                if (res.ok && result.url) {
+                  // simpan URL ke state dan form
+                  const newFile = {
+                    uid: Date.now().toString(),
+                    name: file.name,
+                    status: "done",
+                    url: result.url,
+                  } as UploadFile;
+
+                  setFileList([newFile]);
+                  form.setFieldsValue({
+                    file: result.url, // langsung isi URL ke field form
+                  });
+
+                  message.success("File berhasil diupload!");
+                } else {
+                  message.error(result.msg || "Gagal upload file");
+                }
+              } catch (err) {
+                console.log(err);
+                message.error("Terjadi kesalahan saat upload file.");
+              }
+
+              // cegah upload otomatis bawaan AntD
+              return Upload.LIST_IGNORE;
+            }}
+            onRemove={async (file) => {
+              try {
+                if (file.url) {
+                  const res = await fetch(
+                    `/api/file?url=${encodeURIComponent(file.url)}`,
+                    {
+                      method: "DELETE",
+                    }
+                  );
+
+                  const result = await res.json();
+                  if (res.ok) {
+                    message.success("File berhasil dihapus.");
+                  } else {
+                    message.error(result.msg || "Gagal menghapus file.");
+                  }
+                }
+              } catch (err) {
+                console.log(err);
+                message.error("Terjadi kesalahan saat menghapus file.");
+              }
+
+              setFileList([]);
+              form.setFieldsValue({ file: null });
+            }}
+            listType={"text"}
+          >
+            {fileList.length === 0 && (
+              <Button
+                icon={<UploadCloud size={16} />}
+                type="dashed"
+                htmlType="button"
+              >
+                Upload PDF
+              </Button>
+            )}
+          </Upload>
         </Form.Item>
       </Form>
     </Modal>
@@ -443,9 +525,6 @@ export default function AngsuranManagementPage() {
           <Text type="secondary" style={{ fontSize: "11px" }}>
             Angsuran ke-{record.angsuran_ke}
           </Text>
-          <Text type="secondary" style={{ fontSize: "11px" }}>
-            {record.id}
-          </Text>
         </Space>
       ),
     },
@@ -468,15 +547,10 @@ export default function AngsuranManagementPage() {
       sorter: (a, b) =>
         new Date(a.jadwal_bayar).getTime() - new Date(b.jadwal_bayar).getTime(),
       render: (date: string | Date) => {
-        // Pastikan dayjs diinisialisasi dengan locale("id") terlebih dahulu
         const formattedDate = dayjs(date).locale("id");
 
-        // Ambil nama hari dalam Bahasa Indonesia (dddd)
         const dayName = formattedDate.format("dddd");
 
-        // Ambil tanggal, bulan, dan tahun (DD MMM YYYY)
-        // Locale('id') juga akan memformat bulan ke Indonesia (misalnya, 'Nov' menjadi 'Nov'),
-        // tetapi untuk tanggal, bulan, tahun, format dasarnya sama.
         const fullDate = formattedDate.format("DD MMM YYYY");
 
         // Gabungkan keduanya

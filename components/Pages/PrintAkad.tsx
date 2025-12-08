@@ -124,7 +124,7 @@ export const generateContractHtml = (record: IDapem) => {
         <td class="border px-2 py-1 text-center">${tanggal}</td>
         <td class="border px-2 py-1 text-right">${formatterRupiah(total)}</td>
         <td class="border px-2 py-1 text-center">${bayar}</td>
-        <td class="border px-2 py-1 text-center">________________</td>
+        <td class="border px-2 py-1 text-center"></td>
       </tr>
     `;
     }).join("") || "";

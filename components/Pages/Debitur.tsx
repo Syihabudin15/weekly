@@ -134,7 +134,7 @@ export default function DebtorManagement() {
         <Users className="mr-3" /> Manajemen Data Debitur
       </Title>
       {/* --- DAFTAR DEBITUR --- */}
-      <Card className="shadow-lg">
+      <Card className="shadow-lg" styles={{ body: { padding: 5 } }}>
         <Table
           dataSource={data.data}
           columns={debtorColumns}
@@ -156,6 +156,34 @@ export default function DebtorManagement() {
           }}
           scroll={{ x: 700, y: 320 }}
           locale={{ emptyText: "Tidak ada data debitur yang ditemukan." }}
+          summary={(pageData) => {
+            const totalPlafon = pageData
+              .flatMap((d) => d.Dapem)
+              .reduce((sum, record) => sum + record.plafon, 0);
+            const tab = pageData
+              .flatMap((d) => d.Dapem)
+              .reduce((sum, record) => sum + record.by_tabungan, 0);
+
+            return (
+              <Table.Summary fixed>
+                <Table.Summary.Row
+                  // 1. Latar Belakang abu-abu, teks lebih kecil, dan tebal
+                  className="bg-gray-100 text-xs font-semibold text-blue-500"
+                >
+                  <Table.Summary.Cell index={0}>TOTAL</Table.Summary.Cell>
+                  <Table.Summary.Cell index={1} />
+                  <Table.Summary.Cell index={2} />
+                  <Table.Summary.Cell index={3}>
+                    {formatterRupiah(totalPlafon)}
+                  </Table.Summary.Cell>
+                  <Table.Summary.Cell index={4}>
+                    {formatterRupiah(tab)}
+                  </Table.Summary.Cell>
+                  <Table.Summary.Cell index={5} />
+                </Table.Summary.Row>
+              </Table.Summary>
+            );
+          }}
         />
       </Card>
     </div>

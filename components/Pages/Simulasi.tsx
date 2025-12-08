@@ -416,6 +416,9 @@ export default function CreditSimulationPage() {
                   </Form.Item>
                 </Col>
               </Row>
+              <Row gutter={[5, 5]}>
+                <Col span={12}></Col>
+              </Row>
 
               <Form.Item
                 name="pelunasan"

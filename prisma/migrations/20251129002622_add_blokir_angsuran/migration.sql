@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE `dapem` ADD COLUMN `blokir` INTEGER NOT NULL DEFAULT 0;

@@ -119,6 +119,7 @@ model Dapem {
   by_tatalaksana  Float
   pelunasan       Int
   margin          Float
+  blokir          Int              @default(0)
   description     String?          @db.Text
   status_sub      EStatusPengajuan @default(DRAFT)
   status_dev      Boolean          @default(false)

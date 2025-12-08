@@ -10,9 +10,17 @@ import {
   Input,
   TableProps,
   Button,
+  DatePicker,
 } from "antd";
 import dayjs from "dayjs";
-import { Edit, Info, Search, FolderOpen, Printer } from "lucide-react";
+import {
+  Edit,
+  Info,
+  Search,
+  FolderOpen,
+  Printer,
+  PrinterIcon,
+} from "lucide-react";
 import {
   calculateWeeklyPayment,
   formatterRupiah,
@@ -22,8 +30,10 @@ import {
 import { IDapem, IPageProps } from "../Interface";
 import Link from "next/link";
 import { printContract } from "./PrintAkad";
+import { printLaporan } from "./PrintLaporan";
 
 const { Title } = Typography;
+const { RangePicker } = DatePicker;
 
 const ApplicationStatusMonitoring = () => {
   const [pageProps, setPageProps] = useState<IPageProps<IDapem>>({
@@ -35,6 +45,7 @@ const ApplicationStatusMonitoring = () => {
     filters: [],
   });
   const { canProses, canUpdate } = usePermission();
+  const [loadingLap, setLoadingLap] = useState(false);
 
   const getData = async () => {
     setPageProps((prev) => ({ ...prev, loading: true }));
@@ -120,6 +131,25 @@ const ApplicationStatusMonitoring = () => {
         width: 120,
       },
       {
+        title: "Adm & Materai",
+        dataIndex: "adm",
+        key: "adm",
+        render: (text, record) => {
+          const adm = record.plafon * (record.by_admin / 100);
+          return (
+            <div className="flex flex-col text-xs">
+              {/* <Tag color="blue" className="font-medium"> */}
+              <span>{formatterRupiah(adm)}</span>
+              {/* </Tag> */}
+              {/* <Tag color="blue" className="font-medium"> */}
+              <span>{formatterRupiah(record.by_materai)}</span>
+              {/* </Tag> */}
+            </div>
+          );
+        },
+        width: 120,
+      },
+      {
         title: "Status",
         dataIndex: "status_sub",
         key: "status_sub",
@@ -143,13 +173,18 @@ const ApplicationStatusMonitoring = () => {
         width: 120,
       },
       {
-        title: "Tgl. Pengajuan",
+        title: "Tanggal",
         dataIndex: "created_at",
         key: "created_at",
-        render: (date) => (
-          <Tooltip title={dayjs(date).format("DD MMMM YYYY HH:mm")}>
-            {dayjs(date).format("DD/MM/YYYY")}
-          </Tooltip>
+        render: (date, record) => (
+          <div className="text-xs flex flex-col">
+            <Tooltip title={"Tgl Pengajuan"}>
+              {dayjs(date).format("DD/MM/YYYY")}
+            </Tooltip>
+            <Tooltip title={"Tgl Akad & Pencairan"}>
+              {dayjs(record.process_date).format("DD/MM/YYYY")}
+            </Tooltip>
+          </div>
         ),
         sorter: (a, b) => a.created_at.getTime() - b.created_at.getTime(),
         width: 130,
@@ -209,6 +244,17 @@ const ApplicationStatusMonitoring = () => {
     [canProses, canUpdate, handleAkad]
   );
 
+  const handleCetakLaporan = async () => {
+    setLoadingLap(true);
+    const backdate = pageProps.filters.find((q) => q.key === "backdate");
+    await fetch("/api/laporan")
+      .then((res) => res.json())
+      .then((res) => {
+        printLaporan(pageProps.data, res, backdate && backdate.value);
+      });
+    setLoadingLap(false);
+  };
+
   return (
     <div className="bg-gray-50">
       <Title level={2} className="text-xl font-bold mb-4 text-gray-800">
@@ -220,7 +266,29 @@ const ApplicationStatusMonitoring = () => {
           className="shadow-md rounded-lg"
           styles={{ body: { padding: 5 } }}
         >
-          <div className="p-2">
+          <div className="p-2 flex justify-between">
+            <RangePicker
+              size="small"
+              onChange={(e, dateStr) => {
+                const filt = pageProps.filters.filter(
+                  (f) => f.key !== "backdate"
+                );
+                if (dateStr) {
+                  filt.push({ key: "backdate", value: dateStr });
+                }
+                setPageProps((prev) => ({ ...prev, filters: filt }));
+              }}
+            />
+            <Button
+              size="small"
+              icon={<PrinterIcon size={14} />}
+              type="primary"
+              onClick={() => handleCetakLaporan()}
+              loading={loadingLap}
+              disabled={loadingLap}
+            >
+              Laporan
+            </Button>
             <Input
               placeholder="Cari ID/Nama Debitur..."
               prefix={<Search size={14} />}
@@ -251,7 +319,7 @@ const ApplicationStatusMonitoring = () => {
             scroll={{ x: 800, y: 320 }}
             className="w-full"
             bordered
-            size="middle"
+            size="small"
             loading={pageProps.loading}
             rowKey={"id"}
             summary={(pageData) => {
@@ -267,6 +335,14 @@ const ApplicationStatusMonitoring = () => {
                 );
                 return sum + installl;
               }, 0);
+              const totalAdm = pageData.reduce(
+                (sum, record) => sum + record.plafon * (record.by_admin / 100),
+                0
+              );
+              const totalMaterai = pageData.reduce(
+                (sum, record) => sum + record.by_materai,
+                0
+              );
 
               return (
                 <Table.Summary fixed>
@@ -289,7 +365,10 @@ const ApplicationStatusMonitoring = () => {
                       {formatterRupiah(totalAngsuran)}
                     </Table.Summary.Cell>
                     {/* Sisa Kolom */}
-                    <Table.Summary.Cell index={5} />
+                    <Table.Summary.Cell index={5} className="flex flex-col">
+                      <span>{formatterRupiah(totalAdm)}</span>
+                      <span>{formatterRupiah(totalMaterai)}</span>
+                    </Table.Summary.Cell>
                     <Table.Summary.Cell index={6} />
                     <Table.Summary.Cell index={7} />
                   </Table.Summary.Row>

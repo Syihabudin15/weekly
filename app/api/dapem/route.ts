@@ -5,19 +5,26 @@ import prisma, {
 } from "@/components/Prisma";
 import { GetDefaultPageprop, ResponseServer } from "@/components/ServerUtil";
 import { EStatusPengajuan } from "@prisma/client";
+import moment from "moment";
 import { NextRequest } from "next/server";
 
 export const GET = async (req: NextRequest) => {
-  const { skip, pageSize, search } = GetDefaultPageprop(req);
+  const { skip, pageSize, search, backdate } = GetDefaultPageprop(req);
   const status_sub: EStatusPengajuan | null = <any>(
     req.nextUrl.searchParams.get("status_sub")
   );
-
   const data = await prisma.dapem.findMany({
     where: {
       status: true,
       ...(search && { DataDebitur: { name: { contains: search } } }),
       ...(status_sub && { status_sub: status_sub }),
+      ...(backdate &&
+        backdate !== "," && {
+          created_at: {
+            gte: moment(backdate.split(",")[0]).toDate(),
+            lte: moment(backdate.split(",")[1]).toDate(),
+          },
+        }),
     },
     skip: skip,
     take: pageSize,

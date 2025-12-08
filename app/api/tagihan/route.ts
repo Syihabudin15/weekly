@@ -122,7 +122,7 @@ export const PUT = async (req: NextRequest) => {
     const tanggal_bayar = formData.get("tanggal_bayar") as string;
     const keterangan = formData.get("keterangan") as string;
     const status_kunjungan = formData.get("status_kunjungan") as EKunjungan;
-    const file = formData.get("file") as File | null;
+    const file = formData.get("file") as string;
 
     let filePath: string | null = null;
 
@@ -132,16 +132,16 @@ export const PUT = async (req: NextRequest) => {
         { status: 400 }
       );
     }
-    if (file) {
-      const arrayBuffer = await file.arrayBuffer();
-      const buff = Buffer.from(arrayBuffer);
-      const containerClient = getContainerClient();
-      const blobName = `tagihan/${Date.now()}-${file.name}`;
-      const blockBlobClient = containerClient.getBlockBlobClient(blobName);
-      await blockBlobClient.uploadData(buff);
+    // if (file) {
+    //   const arrayBuffer = await file.arrayBuffer();
+    //   const buff = Buffer.from(arrayBuffer);
+    //   const containerClient = getContainerClient();
+    //   const blobName = `tagihan/${Date.now()}-${file.name}`;
+    //   const blockBlobClient = containerClient.getBlockBlobClient(blobName);
+    //   await blockBlobClient.uploadData(buff);
 
-      filePath = blockBlobClient.url;
-    }
+    //   filePath = blockBlobClient.url;
+    // }
 
     const updated = await prisma.jadwalAngsuran.update({
       where: { id },
@@ -149,9 +149,23 @@ export const PUT = async (req: NextRequest) => {
         tanggal_bayar: tanggal_bayar ? new Date(tanggal_bayar) : null,
         keterangan,
         status_kunjungan,
-        file: filePath,
+        file,
       },
     });
+    if (tanggal_bayar) {
+      const find = await prisma.jadwalAngsuran.findFirst({ where: { id } });
+      if (find) {
+        const dapem = await prisma.dapem.findFirst({
+          where: { id: find.dapemId },
+        });
+        if (find.angsuran_ke === dapem?.tenor) {
+          await prisma.dapem.update({
+            where: { id: dapem.id },
+            data: { status_sub: "LUNAS" },
+          });
+        }
+      }
+    }
 
     return NextResponse.json({ msg: "Berhasil diupdate", data: updated });
   } catch (error) {

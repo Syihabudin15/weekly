@@ -30,6 +30,7 @@ import {
   PlusCircle,
   SaveIcon,
   Scale,
+  Search,
   ShieldCheck,
   TrendingUp,
   UploadCloud,
@@ -334,6 +335,13 @@ export default function UpsertPengajuan({
     setLoading(false);
   };
 
+  const handleSeacrhNIK = async () => {
+    const nik = form.getFieldValue(["DataDebitur", "nik"]);
+    console.log({ nik });
+    if (!nik || nik.length !== 16)
+      return message.error("NIK harus diisi dan 16 digit");
+  };
+
   return (
     <div className="bg-white p-2 rounded-lg">
       <Form
@@ -393,6 +401,16 @@ export default function UpsertPengajuan({
               <Input
                 placeholder="Nomor Induk Kependudukan (16 digit)"
                 maxLength={16}
+                suffix={
+                  <Button
+                    size="small"
+                    type="primary"
+                    htmlType="button"
+                    onClick={() => handleSeacrhNIK()}
+                  >
+                    <Search size={12} />
+                  </Button>
+                }
               />
             </Form.Item>
           </Col>
