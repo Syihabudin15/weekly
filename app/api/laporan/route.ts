@@ -123,7 +123,7 @@ export const GET = async (req: NextRequest) => {
         0
       ),
       totalmaterai: allplaf.reduce((sum, record) => sum + record.by_materai, 0),
-      totalmtab: allplaf.reduce((sum, record) => sum + record.by_tabungan, 0),
+      totaltab: allplaf.reduce((sum, record) => sum + record.by_tabungan, 0),
     },
     { status: 200 }
   );
