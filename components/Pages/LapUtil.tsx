@@ -39,14 +39,14 @@ export const LapPermohonan = (data: IDapem[], backdate?: string[]) => {
     )}
       
       <div class="flex justify-center flex-wrap gap-4 mt-8">
-        <div class="border rounded-lg p-4 w-56">
+        <div class="border rounded-lg p-3 w-56">
           <p class="font-semibold opacity-80">TOTAL PERMOHONAN</p>
           <p class="font-semibold">${data.length} Debitur</p>
           <p class="font-semibold">${formatterRupiah(
             data.reduce((sum, record) => sum + record.plafon, 0)
           )}</p>
         </div>
-        <div class="border rounded-lg p-4 w-56 border-yellow-500 text-yellow-500">
+        <div class="border rounded-lg p-3 w-56 border-yellow-500 text-yellow-500">
           <p class="font-semibold opacity-80">PERMOHONAN PENDING</p>
           <p class="font-semibold">${
             data.filter((d) => ["PENDING", "DRAFT"].includes(d.status_sub))
@@ -58,7 +58,7 @@ export const LapPermohonan = (data: IDapem[], backdate?: string[]) => {
               .reduce((sum, record) => sum + record.plafon, 0)
           )}</p>
         </div>
-        <div class="border rounded-lg p-4 w-56 border-red-500 text-red-500">
+        <div class="border rounded-lg p-3 w-56 border-red-500 text-red-500">
           <p class="font-semibold opacity-80">PERMOHONAN DITOLAK</p>
           <p class="font-semibold">${
             data.filter((d) => d.status_sub === "TOLAK").length
@@ -69,7 +69,7 @@ export const LapPermohonan = (data: IDapem[], backdate?: string[]) => {
               .reduce((sum, record) => sum + record.plafon, 0)
           )}</p>
         </div>
-        <div class="border rounded-lg p-4 w-56 border-blue-500 text-blue-500">
+        <div class="border rounded-lg p-3 w-56 border-blue-500 text-blue-500">
           <p class="font-semibold opacity-80">PERMOHONAN DISETUJUI</p>
           <p class="font-semibold">${
             data.filter((d) => d.status_sub === "SETUJU").length
@@ -87,13 +87,13 @@ export const LapPermohonan = (data: IDapem[], backdate?: string[]) => {
     <table style="width:100%; border-collapse: collapse; margin-top:10px;">
       <thead>
         <tr>
-          <th style="border: 1px solid #aaa; padding: 5px;">No.</th>
-          <th style="border: 1px solid #aaa; padding: 5px;">Nama Lengkap</th>
-          <th style="border: 1px solid #aaa; padding: 5px;">Plafon & Tenor</th>
-          <th style="border: 1px solid #aaa; padding: 5px;">Angsuran</th>
-          <th style="border: 1px solid #aaa; padding: 5px;">Adm & Materai</th>
-          <th style="border: 1px solid #aaa; padding: 5px;">Tabungan</th>
-          <th style="border: 1px solid #aaa; padding: 5px;">Tgl Proses & Lunas</th>
+          <th style="border: 1px solid #aaa; padding: 4px;">No.</th>
+          <th style="border: 1px solid #aaa; padding: 4px;">Nama Lengkap</th>
+          <th style="border: 1px solid #aaa; padding: 4px;">Plafon & Tenor</th>
+          <th style="border: 1px solid #aaa; padding: 4px;">Angsuran</th>
+          <th style="border: 1px solid #aaa; padding: 4px;">Adm & Materai</th>
+          <th style="border: 1px solid #aaa; padding: 4px;">Tabungan Anggota</th>
+          <th style="border: 1px solid #aaa; padding: 4px;">Tgl Proses & Lunas</th>
         </tr>
       </thead>
       <tbody class="text-xs">
@@ -232,20 +232,45 @@ export const FullReport = (data: ILaporan) => {
       </div>
     
     </div>
+
+    <div class="flex gap-4 justify-between my-4">
+
+      <div class="flex-1">
+        <div class="flex gap-2">
+          <p class="w-40">Biaya Administrasi</p>
+          <p class="w-3">:</p>
+          <p class="flex-1">${formatterRupiah(data.totaladmin)}</p>
+        </div>
+        <div class="flex gap-2">
+          <p class="w-40">Biaya Materai</p>
+          <p class="w-3">:</p>
+          <p class="flex-1">${formatterRupiah(data.totalmaterai)}</p>
+        </div>
+      </div>
+
+      <div class="flex-1">
+        <div class="flex gap-2">
+          <p class="w-40">Tabungan Anggota</p>
+          <p class="w-3">:</p>
+          <p class="flex-1">${formatterRupiah(data.totaltab)}</p>
+        </div>
+      </div>
+
+    </div>
       
       <p class="my-2 italic">List Problem Account / Akun Bermasalah</p>
 
     <table style="width:100%; border-collapse: collapse; margin-top:10px;">
       <thead>
         <tr>
-          <th style="border: 1px solid #aaa; padding: 5px;">No.</th>
-          <th style="border: 1px solid #aaa; padding: 5px;">Nama Lengkap</th>
-          <th style="border: 1px solid #aaa; padding: 5px;">Plafon & Tenor</th>
-          <th style="border: 1px solid #aaa; padding: 5px;">Angsuran</th>
-          <th style="border: 1px solid #aaa; padding: 5px;">Tertagih</th>
-          <th style="border: 1px solid #aaa; padding: 5px;">Tertunggak</th>
-          <th style="border: 1px solid #aaa; padding: 5px;">Outstanding</th>
-          <th style="border: 1px solid #aaa; padding: 5px;">Petugas</th>
+          <th style="border: 1px solid #aaa; padding: 4px;">No.</th>
+          <th style="border: 1px solid #aaa; padding: 4px;">Nama Lengkap</th>
+          <th style="border: 1px solid #aaa; padding: 4px;">Plafon & Tenor</th>
+          <th style="border: 1px solid #aaa; padding: 4px;">Angsuran</th>
+          <th style="border: 1px solid #aaa; padding: 4px;">Tertagih</th>
+          <th style="border: 1px solid #aaa; padding: 4px;">Tertunggak</th>
+          <th style="border: 1px solid #aaa; padding: 4px;">Outstanding</th>
+          <th style="border: 1px solid #aaa; padding: 4px;">Petugas</th>
         </tr>
       </thead>
       <tbody class="text-xs">

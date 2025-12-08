@@ -24,6 +24,9 @@ export interface ILaporan {
   monthints: number;
   tertunggak: number;
   tertunggakpokok: number;
+  totaladmin: number;
+  totalmaterai: number;
+  totaltab: number;
 }
 
 export const GET = async (req: NextRequest) => {
@@ -32,7 +35,7 @@ export const GET = async (req: NextRequest) => {
       prisma.dataDebitur.count({
         where: {
           Dapem: {
-            some: { status_sub: { notIn: ["BATAL", "DRAFT", "TOLAK"] } },
+            some: { status_sub: { notIn: ["BATAL", "TOLAK"] } },
           },
         },
       }),
@@ -115,6 +118,12 @@ export const GET = async (req: NextRequest) => {
             moment(a.jadwal_bayar).isSameOrBefore(moment())
         )
         .reduce((sum, record) => sum + record.pokok, 0),
+      totaladmin: allplaf.reduce(
+        (sum, record) => sum + record.plafon * (record.by_admin / 100),
+        0
+      ),
+      totalmaterai: allplaf.reduce((sum, record) => sum + record.by_materai, 0),
+      totalmtab: allplaf.reduce((sum, record) => sum + record.by_tabungan, 0),
     },
     { status: 200 }
   );
