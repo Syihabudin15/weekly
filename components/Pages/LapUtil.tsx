@@ -49,11 +49,12 @@ export const LapPermohonan = (data: IDapem[], backdate?: string[]) => {
         <div class="border rounded-lg p-4 w-56 border-yellow-500 text-yellow-500">
           <p class="font-semibold opacity-80">PERMOHONAN PENDING</p>
           <p class="font-semibold">${
-            data.filter((d) => d.status_sub === "PENDING").length
+            data.filter((d) => ["PENDING", "DRAFT"].includes(d.status_sub))
+              .length
           } Debitur</p>
           <p class="font-semibold">${formatterRupiah(
             data
-              .filter((d) => d.status_sub === "PENDING")
+              .filter((d) => ["PENDING", "DRAFT"].includes(d.status_sub))
               .reduce((sum, record) => sum + record.plafon, 0)
           )}</p>
         </div>
