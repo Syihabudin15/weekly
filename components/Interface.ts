@@ -1,4 +1,5 @@
 import {
+  COA,
   Dapem,
   DataDebitur,
   DataKeluarga,
@@ -6,6 +7,7 @@ import {
   Jaminan,
   Jenis,
   Produk,
+  Transaction,
   Unit,
   User,
 } from "@prisma/client";
@@ -77,4 +79,15 @@ export interface ITagihan extends JadwalAngsuran {
 export interface IDebitur extends DataDebitur {
   Dapem: IDapem[];
   DataKeluarga: DataKeluarga[];
+}
+
+export interface IActtion<T> {
+  upsert: boolean;
+  delete: boolean;
+  loading: boolean;
+  data: T | undefined;
+}
+
+export interface ITransaction extends Transaction {
+  COA: COA;
 }

@@ -1,0 +1,28 @@
+-- CreateTable
+CREATE TABLE `COA` (
+    `id` VARCHAR(191) NOT NULL,
+    `type` ENUM('MASUK', 'KELUAR') NOT NULL,
+    `name` VARCHAR(191) NOT NULL,
+    `status` BOOLEAN NOT NULL DEFAULT true,
+    `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updated_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `Transaction` (
+    `id` VARCHAR(191) NOT NULL,
+    `nominal` INTEGER NOT NULL,
+    `desc` VARCHAR(191) NULL,
+    `file` VARCHAR(191) NULL,
+    `cOAId` VARCHAR(191) NOT NULL,
+    `status` BOOLEAN NOT NULL DEFAULT true,
+    `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updated_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- AddForeignKey
+ALTER TABLE `Transaction` ADD CONSTRAINT `Transaction_cOAId_fkey` FOREIGN KEY (`cOAId`) REFERENCES `COA`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;

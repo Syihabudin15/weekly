@@ -222,7 +222,7 @@ export default function CreditSimulationPage() {
     <div className="space-y-4">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">
+        <h1 className="text-2xl font-bold text-gray-900">
           Simulasi Kredit Mingguan 📅
         </h1>
       </div>

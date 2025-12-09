@@ -89,7 +89,6 @@ const ApplicationStatusMonitoring = () => {
         dataIndex: "id",
         key: "id",
         width: 120,
-        fixed: "left",
       },
       {
         title: "Nama Debitur",
@@ -192,10 +191,9 @@ const ApplicationStatusMonitoring = () => {
       {
         title: "Aksi",
         key: "action",
-        fixed: "right",
         width: 100,
         render: (value, record) => (
-          <Space size="middle">
+          <Space size="small">
             {record.status_sub === "PENDING" && canProses("/monitoring") && (
               <Link href={"/pengajuan/" + record.id}>
                 <Tooltip
@@ -258,7 +256,7 @@ const ApplicationStatusMonitoring = () => {
 
   return (
     <div className="bg-gray-50">
-      <Title level={2} className="text-xl font-bold mb-4 text-gray-800">
+      <Title level={3} className="text-xl font-bold mb-4 text-gray-800">
         Monitoring Pembiayaan
       </Title>
 

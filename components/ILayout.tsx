@@ -23,6 +23,9 @@ import {
   Key,
   CircleDollarSignIcon,
   GitBranch,
+  LucideCircleDollarSign,
+  ListChecksIcon,
+  DollarSign,
 } from "lucide-react";
 import "@ant-design/v5-patch-for-react-19";
 import { IPermission } from "./Interface";
@@ -60,12 +63,6 @@ export const menuItems: MenuItem[] = [
     icon: FileBadge2,
     requiredPermission: "/pengajuan",
   },
-  // {
-  //   path: "/lunas",
-  //   name: "Debitur Lunas",
-  //   icon: Receipt,
-  //   requiredPermission: "/lunas",
-  // },
   {
     path: "/debitur",
     name: "Data Debitur",
@@ -83,6 +80,26 @@ export const menuItems: MenuItem[] = [
     name: "Data Tagihan",
     icon: Calendar,
     requiredPermission: "/tagihan",
+  },
+  {
+    path: "/laporan",
+    name: "Laporan Administrasi",
+    icon: LucideCircleDollarSign,
+    requiredPermission: "/laporan/trx",
+    children: [
+      {
+        path: "/laporan/coa",
+        name: "COA",
+        icon: ListChecksIcon,
+        requiredPermission: "/laporan/coa",
+      },
+      {
+        path: "/laporan/trx",
+        name: "Transaksi",
+        icon: DollarSign,
+        requiredPermission: "/laporan/trx",
+      },
+    ],
   },
   {
     path: "/jenis",
@@ -243,10 +260,11 @@ export default function MainLayout({
                         <Link
                           key={child.path}
                           href={child.path}
-                          className={`block p-2 pl-8 rounded-lg hover:bg-blue-800 transition-colors ${
+                          className={` p-2 pl-8 rounded-lg hover:bg-blue-800 transition-colors flex gap-2 ${
                             pathname === child.path ? "bg-blue-800" : ""
                           }`}
                         >
+                          <child.icon size={20} />
                           {child.name}
                         </Link>
                       ))}
@@ -315,7 +333,7 @@ export default function MainLayout({
       {/* Overlay for mobile (tetap sama) */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+          className="fixed top-0 left-64 right-0 bottom-0 bg-opacity-50 z-40 lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}

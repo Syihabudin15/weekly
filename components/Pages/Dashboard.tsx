@@ -61,7 +61,7 @@ const fetchMonitoringData = async () => {
 };
 
 // 1. Komponen Kartu KPI
-const KpiCard = ({
+export const KpiCard = ({
   title,
   value,
   icon,
@@ -79,7 +79,7 @@ const KpiCard = ({
     className="shadow-md h-full transition duration-300 hover:shadow-lg hover:border-r-4"
     style={{ borderColor: color || "#2563eb" }}
   >
-    <Space direction="horizontal" className="justify-between w-full">
+    <Space direction="horizontal" className="justify-between">
       <Statistic
         title={
           <Text type="secondary" className="text-sm flex items-center">
@@ -90,9 +90,7 @@ const KpiCard = ({
         suffix={unit}
         valueStyle={{ color: color || "#2563eb", fontSize: "24px" }}
         // Menggunakan Math.round untuk menghindari tampilan desimal pada Rupiah kecuali NPL Rate
-        formatter={(v) =>
-          unit === "%" ? v : unit === "Orang" ? v : formatterRupiah(v)
-        }
+        formatter={(v) => (unit && unit !== "Rp" ? v : formatterRupiah(v))}
       />
     </Space>
   </Card>
@@ -229,8 +227,8 @@ export default function FinancingMonitoringDashboard() {
   };
 
   return (
-    <div className="p-4 space-y-6 bg-gray-50 min-h-screen">
-      <Title level={2} className="text-gray-800 flex items-center">
+    <div className="space-y-6 bg-gray-50 min-h-screen">
+      <Title level={3} className="text-gray-800 flex items-center">
         <Loader size={30} className="inline mr-2 text-red-500" /> Dashboard
         Monitoring Pembiayaan
       </Title>

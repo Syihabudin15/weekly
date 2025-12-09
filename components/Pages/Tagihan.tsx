@@ -640,13 +640,13 @@ export default function AngsuranManagementPage() {
     <div className="space-y-2">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">
+        <h1 className="text-2xl font-bold text-gray-900">
           Data Tagihan Mingguan{" "}
           <Receipt size={28} className="inline-block text-red-500" />
         </h1>
       </div>
 
-      <Card className="shadow-lg">
+      <Card className="shadow-lg" styles={{ body: { padding: 5 } }}>
         <Space direction="vertical" size="small" className="w-full">
           {/* Toolbar Pencarian */}
           <div className="flex justify-between items-center">

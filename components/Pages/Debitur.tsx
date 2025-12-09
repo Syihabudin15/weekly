@@ -130,7 +130,7 @@ export default function DebtorManagement() {
 
   return (
     <div className="space-y-2  bg-gray-50 ">
-      <Title level={2} className="text-gray-900 flex items-center">
+      <Title level={3} className="text-gray-900 flex items-center">
         <Users className="mr-3" /> Manajemen Data Debitur
       </Title>
       {/* --- DAFTAR DEBITUR --- */}

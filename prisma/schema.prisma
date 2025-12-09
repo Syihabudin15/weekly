@@ -33,6 +33,11 @@ enum EStatusKawin {
   D
 }
 
+enum COAType {
+  MASUK
+  KELUAR
+}
+
 model Role {
   id          String  @id @default(uuid())
   name        String
@@ -220,4 +225,29 @@ model Pelunasan {
   status     Boolean  @default(true)
   Dapem      Dapem    @relation(fields: [dapemId], references: [id])
   dapemId    String
+}
+
+model COA {
+  id   String  @id
+  type COAType
+  name String
+
+  status       Boolean       @default(true)
+  created_at   DateTime      @default(now())
+  updated_at   DateTime      @default(now())
+  Transactions Transaction[]
+}
+
+model Transaction {
+  id      String  @id
+  nominal Int
+  desc    String?
+  file    String?
+
+  COA   COA    @relation(fields: [cOAId], references: [id])
+  cOAId String
+
+  status     Boolean  @default(true)
+  created_at DateTime @default(now())
+  updated_at DateTime @default(now())
 }

@@ -276,13 +276,13 @@ export default function RepaymentManagement() {
 
   return (
     <div className="space-y-2 bg-gray-50">
-      <Title level={2} className="text-gray-900 flex items-center">
+      <Title level={3} className="text-gray-900 flex items-center">
         <DollarSign className="mr-3 text-green-600" /> Manajemen Pelunasan
         Debitur
       </Title>
 
       {/* --- DAFTAR PINJAMAN --- */}
-      <Card className="shadow-lg">
+      <Card className="shadow-lg" styles={{ body: { padding: 5 } }}>
         <Table
           dataSource={loans}
           columns={repaymentColumns}

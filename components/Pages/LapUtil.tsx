@@ -32,9 +32,9 @@ export const LapPermohonan = (data: IDapem[], backdate?: string[]) => {
     ${HeaderPage(
       "LAPORAN DATA PEMBIAYAAN",
       backdate && backdate.length === 2 && backdate[0]
-        ? `PERIODE ${moment(backdate[0]).format("DD/MM/YYYY")} ${moment(
+        ? `PERIODE ${moment(backdate[0]).format("DD/MM/YYYY")} - ${moment(
             backdate[1]
-          ).format("DD/MM/YYYY")}- `
+          ).format("DD/MM/YYYY")}`
         : "PERIODE TIDAK DIPILIH"
     )}
       

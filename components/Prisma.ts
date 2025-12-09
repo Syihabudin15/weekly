@@ -1,4 +1,4 @@
-import { JadwalAngsuran, PrismaClient } from "@prisma/client";
+import { COAType, JadwalAngsuran, PrismaClient } from "@prisma/client";
 import { IDapem } from "./Interface";
 import { calculateWeeklyPayment } from "./Util";
 import moment from "moment";
@@ -67,4 +67,29 @@ export function generateJadwalAngsuran(dapem: IDapem) {
     });
   }
   return jadwals;
+}
+
+export async function generateCOAId(type: COAType) {
+  const prefix = type === "MASUK" ? "K" : "D";
+  const padLength = 3; // jumlah digit angka
+
+  // Ambil record terakhir berdasarkan ID (urut desc)
+  const lastRecord = await prisma.cOA.count({ where: { type } });
+
+  // Format ulang dengan leading zero
+  const newId = `${prefix}${String(lastRecord + 1).padStart(padLength, "0")}`;
+
+  return newId;
+}
+export async function generateTrxId() {
+  const prefix = "TX";
+  const padLength = 5; // jumlah digit angka
+
+  // Ambil record terakhir berdasarkan ID (urut desc)
+  const lastRecord = await prisma.transaction.count({});
+
+  // Format ulang dengan leading zero
+  const newId = `${prefix}${String(lastRecord + 1).padStart(padLength, "0")}`;
+
+  return newId;
 }

@@ -103,7 +103,6 @@ const ApplicationListManagement = () => {
       dataIndex: "id",
       key: "id",
       sorter: (a, b) => a.id.localeCompare(b.id),
-      fixed: "left",
       width: 110,
     },
     {
@@ -221,17 +220,19 @@ const ApplicationListManagement = () => {
           )}
         </Space>
       ),
-      fixed: window && window.innerWidth > 600 ? "right" : false,
       width: 150,
     },
   ];
 
   return (
     <div className="bg-gray-50">
-      <Card className="shadow-xl rounded-lg border-t-4 border-blue-500">
+      <Card
+        className="shadow-xl rounded-lg border-t-4 border-blue-500"
+        styles={{ body: { padding: 5 } }}
+      >
         <Row justify="space-between" align="middle">
           <Col>
-            <Title level={2} className="text-xl font-bold m-0 text-gray-800">
+            <Title level={3} className="text-xl font-bold m-0 text-gray-800">
               Manajemen Pengajuan Kredit
             </Title>
           </Col>
